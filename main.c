@@ -21,6 +21,7 @@ typedef struct {
 
 typedef struct {
     int x, y;
+    int curr_pts, pts, max_pts;
 } Player;
 
 typedef struct {
@@ -148,14 +149,58 @@ State handle_input(const Game* g) {
     return None;
 }
 
+void change_color(Win* win, int color) {
+    switch (color) {
+        case 1: wcolor_set(win->win, GROUND_COL, NULL);
+        break;
+        case 2: wcolor_set(win->win, WATER_COL, NULL);
+        break;
+        default: wcolor_set(win->win, SAFE_GROUND_COL, NULL);
+        break;
+    }
+}
+
+void draw_frog(const Game* g) {
+    change_color(g->game_win, g->lines[g->pl->y - 1]);
+    mvwprintw(g->game_win->win, g->pl->y, g->pl->x, "F");
+}
+
+void draw_game(const Game* g) {
+    for (int i = 1; i < g->game_win->rows - 1; i++) {
+        change_color(g->game_win, g->lines[i - 1]);
+        for (int j = 1; j < g->game_win->cols - 1; j++) {
+            mvwprintw(g->game_win->win, i, j, " ");
+        }
+    }
+}
+
+void draw_pts(const Game* g) {
+    mvwprintw(g->top_bar->win, 1, 1, "PTS: %d | MAX PTS: %d", g->pl->pts, g->pl->max_pts);
+    wrefresh(g->top_bar->win);
+}
+
+void calc_pts(Game* g) {
+    if (g->pl->curr_pts > g->pl->pts) {
+        g->pl->pts = g->pl->curr_pts;
+    }
+    if (g->pl->pts > g->pl->max_pts) {
+        g->pl->max_pts = g->pl->pts;
+    }
+}
+
 int main() {
     srand(time(NULL));
     WINDOW* main = init_ncurses();
     Game* g = create_game(main, 26, 27);
     while (1) {
         State code = handle_input(g);
+        calc_pts(g);
         if (code == Exit) break;
 
+        clear_win(g->top_bar);
+        draw_pts(g);
+        draw_game(g);
+        draw_frog(g);
     }
     free_game(g);
     endwin();
