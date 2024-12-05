@@ -24,8 +24,10 @@ typedef struct {
 } Player;
 
 typedef struct {
-    Win* win;
-    Player p;
+    Win* top_bar;
+    Win* game_win;
+    Player* pl;
+    int* lines;
 } Game;
 
 WINDOW* init_ncurses() {
@@ -49,30 +51,68 @@ WINDOW* init_ncurses() {
 }
 
 void clear_win(const Win* W) {
-    for(int i = 0; i < W->rows; i++)
-        for(int j = 0; j < W->cols; j++)
-            mvwprintw(W->win, i, j," ");
+    for (int i = 1; i < W->rows - 1; i++)
+        for (int j = 1; j < W->cols - 1; j++)
+            mvwprintw(W->win, i, j, " ");
 }
 
 Win* create_window(WINDOW* parent, int rows, int cols, int y, int x) {
     Win* w = malloc(sizeof(Win));
     w->win = subwin(parent, rows, cols, y, x);
+    w->rows = rows;
+    w->cols = cols;
+    w->y = y;
+    w->x = x;
     clear_win(w);
     wrefresh(w->win);
     return w;
 }
 
+Player* create_player(int row, int col) {
+    Player* p = malloc(sizeof(Player));
+    p->y = row;
+    p->x = col;
+    p->curr_pts = 0;
+    p->max_pts = 0;
+    p->pts = 0;
+    return p;
+}
+
+Game* create_game(WINDOW* main, int rows, int cols) {
+    Game* g = malloc(sizeof(Game));
+    g->pl = create_player(rows - 5, cols / 2);
+    int* lines = malloc(sizeof(int) * (rows - 5));
+    for (int i = 0; i < rows - 4; i++) {
+        lines[i] = RA(0, 2);
+    }
+    lines[rows - 6] = 0;
+    g->lines = lines;
+    g->top_bar = create_window(main, 3, cols, 0, 0);
+    wcolor_set(g->top_bar->win, GROUND_COL, NULL);
+    clear_win(g->top_bar);
+    wborder(g->top_bar->win, '|', '|', '-', '-', '+', '+', '+', '+');
+    nodelay(g->top_bar->win, 1);
+    wrefresh(g->top_bar->win);
+
+    g->game_win = create_window(main, rows - 3, cols, 2, 0);
+    wcolor_set(g->game_win->win, GROUND_COL, NULL);
+    clear_win(g->game_win);
+    wborder(g->game_win->win, '|', '|', '-', '-', '+', '+', '+', '+');
+    nodelay(g->game_win->win, 1);
+    wrefresh(g->game_win->win);
+    return g;
+}
+
 void free_game(Game* g) {
-    delwin(g->win->win);
-    free(g->win);
+    delwin(g->top_bar->win);
+    delwin(g->game_win->win);
+    free(g->game_win);
     free(g);
 }
 
 int main() {
     WINDOW* main = init_ncurses();
-    Game* g = malloc(sizeof(Game));
-    g->win = create_window(main, 10, 10, 0, 0);
-
+    Game* g = create_game(main, 26, 27);
     int ch = '\0';
     while (ch != 'q') {
         ch = getch();
