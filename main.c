@@ -1,13 +1,17 @@
 #include <stdlib.h>
 #include <ncursesw/ncurses.h>
+#include <ctype.h>
+#include <time.h>
+#include <unistd.h>
 
-#define DELAY_OFF 1
-
+#define DEFAULT_COL 0
 #define PLAYER_COL 1
 #define GROUND_COL 2
 #define CAR_COL 3
+#define SAFE_GROUND_COL 4
+#define WATER_COL 5
 
-#define RA(min, max, seed) ( (min) + srand(seed) % ((max) - (min) + 1) )
+#define RA(min, max) ( (min) + rand() % ((max) - (min) + 1) )
 
 typedef struct {
     WINDOW* win;
@@ -33,9 +37,11 @@ WINDOW* init_ncurses() {
     }
 
     start_color();
+    init_pair(DEFAULT_COL, COLOR_WHITE, COLOR_BLACK);
     init_pair(PLAYER_COL, COLOR_WHITE, COLOR_GREEN);
-    init_pair(GROUND_COL, COLOR_BLUE, COLOR_RED);
-    init_pair(CAR_COL, COLOR_WHITE, COLOR_BLUE);
+    init_pair(GROUND_COL, COLOR_WHITE, COLOR_BLACK);
+    init_pair(WATER_COL, COLOR_WHITE, COLOR_CYAN);
+    init_pair(SAFE_GROUND_COL, COLOR_WHITE, COLOR_GREEN);
 
     noecho();
     curs_set(0);
