@@ -110,16 +110,54 @@ void free_game(Game* g) {
     free(g);
 }
 
+typedef enum {
+    None,
+    Exit,
+} State;
+
+State handle_input(const Game* g) {
+    usleep(500);
+    const int ch = wgetch(g->game_win->win);
+    Player* pl = g->pl;
+    switch (ch) {
+        case 'w':
+            if (pl->y > 1) {
+                pl->y--;
+                g->pl->curr_pts++;
+            } else pl->y = 1;
+            break;
+        case 's':
+            if (pl->y < g->game_win->rows - 2) {
+                pl->y++;
+                g->pl->curr_pts--;
+            } else pl->y = g->game_win->rows - 2;
+            break;
+        case 'a':
+            if (pl->x > 1) pl->x--;
+            else pl->x = 1;
+            break;
+        case 'd':
+            if (pl->x < g->game_win->cols - 2) pl->x++;
+            else pl->x = g->game_win->cols - 2;
+            break;
+        case 'q':
+            return Exit;
+        default:
+            return None;
+    }
+    return None;
+}
+
 int main() {
+    srand(time(NULL));
     WINDOW* main = init_ncurses();
     Game* g = create_game(main, 26, 27);
-    int ch = '\0';
-    while (ch != 'q') {
-        ch = getch();
-    }
+    while (1) {
+        State code = handle_input(g);
+        if (code == Exit) break;
 
+    }
     free_game(g);
     endwin();
     return 0;
 }
-
