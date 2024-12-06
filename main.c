@@ -24,10 +24,24 @@ typedef struct {
     int curr_pts, pts, max_pts;
 } Player;
 
+typedef enum {
+    Simple,
+    Clean,
+    Extra
+} BorderType;
+
+typedef struct {
+    BorderType border_type;
+    int width, height;
+    long long seed;
+} GameConfig;
+
 typedef struct {
     Win* top_bar;
     Win* game_win;
-    Player* pl;
+    Win* bottom_bar;
+    GameConfig* config;
+    Player* player;
     int* lines;
 } Game;
 
@@ -57,16 +71,18 @@ void clear_win(const Win* W) {
             mvwprintw(W->win, i, j, " ");
 }
 
-Win* create_window(WINDOW* parent, int rows, int cols, int y, int x) {
-    Win* w = malloc(sizeof(Win));
-    w->win = subwin(parent, rows, cols, y, x);
-    w->rows = rows;
-    w->cols = cols;
-    w->y = y;
-    w->x = x;
-    clear_win(w);
-    wrefresh(w->win);
-    return w;
+Win* create_window(int rows, int cols, int y, int x) {
+    Win* window = malloc(sizeof(Win));
+    window->win = newwin(rows, cols, y, x);
+    window->rows = rows;
+    window->cols = cols;
+    window->y = y;
+    window->x = x;
+    clear_win(window);
+    wcolor_set(window->win, DEFAULT_COL, NULL);
+    nodelay(window->win, 1);
+    wrefresh(window->win);
+    return window;
 }
 
 Player* create_player(int row, int col) {
@@ -79,58 +95,101 @@ Player* create_player(int row, int col) {
     return p;
 }
 
-Game* create_game(WINDOW* main, int rows, int cols) {
-    Game* g = malloc(sizeof(Game));
-    g->pl = create_player(rows - 5, cols / 2);
-    int* lines = malloc(sizeof(int) * (rows - 5));
-    for (int i = 0; i < rows - 4; i++) {
-        lines[i] = RA(0, 2);
+Game* create_game() {
+    Game* game = malloc(sizeof(Game));
+    game->state = GameMenu;
+
+    game->config = malloc(sizeof(GameConfig));
+    game->config->border_type = Simple;
+    game->config->height = 31;
+    game->config->width = 21;
+    game->config->seed = time(NULL);
+    FILE* config_file = fopen("config.txt", "r");
+    if (config_file == NULL) {
+        fclose(config_file);
+        FILE* config_create = fopen("config.txt", "w");
+        // filling config with default values
+        fprintf(config_create, "border simple\n");
+        fprintf(config_create, "size 31 21\n");
+        fclose(config_create);
+    } else {
+        while (!feof(config_file)) {
+            char name[20];
+            fscanf(config_file, "%s", name);
+            if (strcmp(name, "border") == 0) {
+                char border_type[20];
+                fscanf(config_file, "%s", border_type);
+                if (strcmp(border_type, "clean") == 0) game->config->border_type = Clean;
+                else if (strcmp(border_type, "extra") == 0) game->config->border_type = Extra;
+                else game->config->border_type = Simple;
+            } else if (strcmp(name, "size") == 0) {
+                fscanf(config_file, "%d %d", &game->config->width, &game->config->height);
+            } else if (strcmp(name, "seed") == 0) {
+                fscanf(config_file, "%ld", &game->config->seed);
+            }
+        }
+        fclose(config_file);
     }
-    lines[rows - 6] = 0;
-    g->lines = lines;
-    g->top_bar = create_window(main, 3, cols, 0, 0);
-    wcolor_set(g->top_bar->win, GROUND_COL, NULL);
-    clear_win(g->top_bar);
-    wborder(g->top_bar->win, '|', '|', '-', '-', '+', '+', '+', '+');
-    nodelay(g->top_bar->win, 1);
-    wrefresh(g->top_bar->win);
+    srand(game->config->seed);
 
-    g->game_win = create_window(main, rows - 3, cols, 2, 0);
-    wcolor_set(g->game_win->win, GROUND_COL, NULL);
-    clear_win(g->game_win);
-    wborder(g->game_win->win, '|', '|', '-', '-', '+', '+', '+', '+');
-    nodelay(g->game_win->win, 1);
-    wrefresh(g->game_win->win);
-    return g;
-}
+    // game->player = create_player(rows - 5, cols / 2);
+    // int* lines = malloc(sizeof(int) * (rows - 5));
+    // for (int i = 0; i < rows - 4; i++) {
+    //     lines[i] = RA(0, 2);
+    // }
+    // lines[rows - 6] = 0;
+    // game->lines = lines;
 
-void free_game(Game* g) {
-    delwin(g->top_bar->win);
-    delwin(g->game_win->win);
-    free(g->game_win);
-    free(g);
+    game->top_bar = create_window(3, game->config->width, 0, 0);
+    game->game_win = create_window(game->config->height, game->config->width, 2, 0);
+    game->bottom_bar = create_window(3, game->config->width, game->config->height + 1, 0);
+    switch (game->config->border_type) {
+        case Simple:
+            wborder(game->top_bar->win, '|', '|', '-', '-', '+', '+', '+', '+');
+            wborder(game->game_win->win, '|', '|', '-', '-', '+', '+', '+', '+');
+            wborder(game->bottom_bar->win, '|', '|', '-', '-', '+', '+', '+', '+');
+            break;
+        case Clean:
+            mvwin(game->game_win->win, 3, 0);
+            mvwin(game->bottom_bar->win, game->config->height + 3, 0);
+            box(game->top_bar->win, 0, 0);
+            box(game->game_win->win, 0, 0);
+            box(game->bottom_bar->win, 0, 0);
+            break;
+        case Extra:
+            wborder(game->top_bar->win, 0, 0, '=', '=', '[', ']', '[', ']');
+            wborder(game->game_win->win, 0, 0, '=', '=', '[', ']', '[', ']');
+            wborder(game->bottom_bar->win, 0, 0, '=', '=', '[', ']', '[', ']');
+            break;
+    }
+    mvwprintw(game->top_bar->win, 1, game->config->width/2-3, "FROGGED");
+    wrefresh(game->top_bar->win);
+    wrefresh(game->game_win->win);
+    mvwprintw(game->bottom_bar->win, 1, 1, "Piotr Lempkowski s203350");
+    wrefresh(game->bottom_bar->win);
+    return game;
 }
 
 typedef enum {
     None,
     Exit,
-} State;
+} CharRet;
 
-State handle_input(const Game* g) {
+CharRet handle_input(const Game* g) {
     usleep(500);
     const int ch = wgetch(g->game_win->win);
-    Player* pl = g->pl;
+    Player* pl = g->player;
     switch (ch) {
         case 'w':
             if (pl->y > 1) {
                 pl->y--;
-                g->pl->curr_pts++;
+                g->player->curr_pts++;
             } else pl->y = 1;
             break;
         case 's':
             if (pl->y < g->game_win->rows - 2) {
                 pl->y++;
-                g->pl->curr_pts--;
+                g->player->curr_pts--;
             } else pl->y = g->game_win->rows - 2;
             break;
         case 'a':
@@ -152,17 +211,17 @@ State handle_input(const Game* g) {
 void change_color(Win* win, int color) {
     switch (color) {
         case 1: wcolor_set(win->win, GROUND_COL, NULL);
-        break;
+            break;
         case 2: wcolor_set(win->win, WATER_COL, NULL);
-        break;
+            break;
         default: wcolor_set(win->win, SAFE_GROUND_COL, NULL);
-        break;
+            break;
     }
 }
 
 void draw_frog(const Game* g) {
-    change_color(g->game_win, g->lines[g->pl->y - 1]);
-    mvwprintw(g->game_win->win, g->pl->y, g->pl->x, "F");
+    change_color(g->game_win, g->lines[g->player->y - 1]);
+    mvwprintw(g->game_win->win, g->player->y, g->player->x, "F");
 }
 
 void draw_game(const Game* g) {
@@ -175,28 +234,29 @@ void draw_game(const Game* g) {
 }
 
 void draw_pts(const Game* g) {
-    mvwprintw(g->top_bar->win, 1, 1, "PTS: %d | MAX PTS: %d", g->pl->pts, g->pl->max_pts);
+    mvwprintw(g->top_bar->win, 1, 1, "PTS: %d | MAX PTS: %d", g->player->pts, g->player->max_pts);
     wrefresh(g->top_bar->win);
 }
 
-void calc_pts(Game* g) {
-    if (g->pl->curr_pts > g->pl->pts) {
-        g->pl->pts = g->pl->curr_pts;
+void calc_pts(Game* game) {
+    if (game->player->curr_pts > game->player->pts) {
+        game->player->pts = game->player->curr_pts;
     }
-    if (g->pl->pts > g->pl->max_pts) {
-        g->pl->max_pts = g->pl->pts;
+    if (game->player->pts > game->player->max_pts) {
+        game->player->max_pts = game->player->pts;
     }
 }
 
+void game_menu(Game* game) {
+}
+
 int main() {
-    srand(time(NULL));
     WINDOW* main = init_ncurses();
     Game* g = create_game(main, 26, 27);
     while (1) {
-        State code = handle_input(g);
+        CharRet code = handle_input(g);
         calc_pts(g);
         if (code == Exit) break;
-
         clear_win(g->top_bar);
         draw_pts(g);
         draw_game(g);
