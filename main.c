@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <ncursesw/ncurses.h>
 #include <ctype.h>
-#include <tgmath.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -15,6 +14,7 @@
 
 #define RA(min, max) ( (min) + rand() % ((max) - (min) + 1) )
 #define Clamp(value, min, max) ( value < min ? min : value > max ? max : value )
+#define centerX(game, string) (game->main_win->cols / 2 - (int) strlen(string) / 2)
 
 //////////////
 /// WINDOW ///
@@ -94,6 +94,7 @@ Player* create_player(int row, int col) {
 typedef enum {
     GameExit,
     GameMenu,
+    GameHelp,
     GameSettings,
     GameSettingsEdit,
     GamePlaying,
@@ -245,10 +246,9 @@ Game* create_game() {
 
 void print_centered_list(Game* game, char** string_list, int list_length) {
     for (int i = 0; i < list_length; i++) {
-        int offset = i == game->context_data.menu_data.selected ? -1 : 1;
+        int offset = i == game->context_data.menu_data.selected ? -2 : 0;
         int centeredY = game->main_win->rows / 2 - list_length / 2 + i;
-        int centeredX = game->main_win->cols / 2 - (int) strlen(string_list[i]) / 2 + offset - 1;
-        mvwprintw(game->main_win->win, centeredY, centeredX, i == game->context_data.menu_data.selected ? "> %s <" : "%s", string_list[i]);
+        mvwprintw(game->main_win->win, centeredY, centerX(game, string_list[i]) + offset, i == game->context_data.menu_data.selected ? "> %s <" : "%s", string_list[i]);
     }
     wrefresh(game->main_win->win);
 }
@@ -273,8 +273,10 @@ int handle_select_menu(Game* game, int key, int max) {
 }
 
 void game_menu(Game* game) {
+    clear_win(game->top_win);
     mvwprintw(game->top_win->win, 1, game->main_win->cols / 2 - 3, "FROGGED");
-    char* select_menu[3] = {"Start Game", "Settings", "Exit"};
+    wrefresh(game->top_win->win);
+    char* select_menu[5] = {"Start Game", "Levels", "How to", "Settings", "Exit"};
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
     print_centered_list(game, select_menu, list_length);
 
@@ -284,11 +286,15 @@ void game_menu(Game* game) {
             case 0:
                 game->state = GamePlaying;
                 break;
-            case 1:
+            case 2:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameHelp;
+                break;
+            case 3:
                 game->context_data.menu_data.selected = 0;
                 game->state = GameSettings;
                 break;
-            case 2:
+            case 4:
                 game->state = GameExit;
                 break;
             default: break;
@@ -311,7 +317,7 @@ void game_settings_menu(Game* game) {
                 game->state = GameSettingsEdit;
                 break;
             case 3:
-                game->context_data.menu_data.selected = 1;
+                game->context_data.menu_data.selected = 3;
                 game->state = GameMenu;
                 break;
             default: break;
@@ -321,7 +327,7 @@ void game_settings_menu(Game* game) {
 
 int digit_amount(long long n) {
     int r = 1;
-    if (n < 0) n = n == INT_MIN ? INT_MAX: -n;
+    if (n < 0) n = n == INT_MIN ? INT_MAX : -n;
     while (n > 9) {
         n /= 10;
         r++;
@@ -354,16 +360,16 @@ void game_settings_edit(Game* game) {
         print_centered_list(game, select_menu, list_length);
     } else if (game->context_data.menu_data.setting == 2) {
         char* message = "Selecting won't save to file";
-        mvwprintw(game->main_win->win, 1, game->main_win->cols / 2 - (int) strlen(message) / 2, message);
+        mvwprintw(game->main_win->win, 1, centerX(game, message), message);
         char* message3 = "Leaving 0 will";
-        mvwprintw(game->main_win->win, 4, game->main_win->cols / 2 - (int) strlen(message3) / 2, message3);
+        mvwprintw(game->main_win->win, 4, centerX(game, message3), message3);
         char* message4 = "use time(NULL) as seed";
-        mvwprintw(game->main_win->win, 5, game->main_win->cols / 2 - (int) strlen(message4) / 2, message4);
+        mvwprintw(game->main_win->win, 5, centerX(game, message4), message4);
         char* message2 = "Click TAB to accept";
-        mvwprintw(game->main_win->win, 7, game->main_win->cols / 2 - (int) strlen(message2) / 2, message2);
-        mvwprintw(game->main_win->win, 10, game->main_win->cols/2 - 10, "> %lld", game->config.seed);
-        mvwprintw(game->main_win->win, 10, game->main_win->cols/2 + 10, "<", game->config.seed);
-        wmove(game->main_win->win, 10, game->main_win->cols/2 + digit_amount(game->config.seed) - 8);
+        mvwprintw(game->main_win->win, 7, centerX(game, message2), message2);
+        mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 - 10, "> %lld", game->config.seed);
+        mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 + 10, "<");
+        wmove(game->main_win->win, 10, game->main_win->cols / 2 + digit_amount(game->config.seed) - 8);
         curs_set(1);
     } else {
         free(select_menu);
@@ -407,6 +413,22 @@ void game_settings_edit(Game* game) {
     }
     free(select_menu);
 }
+
+void game_help(Game* game) {
+    char* message1 = "You are a FROG";
+    mvwprintw(game->main_win->win, 2, centerX(game, message1), message1);
+
+    char* back = "> Back <";
+    mvwprintw(game->main_win->win, game->main_win->rows * 2 / 3, centerX(game, back), back);
+    wrefresh(game->main_win->win);
+
+    int key = wgetch(game->main_win->win);
+    if (key == 'q' || key == ' ' || key == 'e') {
+        game->state = GameMenu;
+        game->context_data.menu_data.selected = 2;
+    }
+}
+
 
 typedef enum {
     None,
@@ -487,20 +509,21 @@ void change_color(Win* win, int color) {
 
 
 int main() {
-    WINDOW* main = init_ncurses();
-    Game* game = create_game(main);
+    init_ncurses();
+    Game* game = create_game();
     while (1) {
+        clear_win(game->main_win);
         switch (game->state) {
             case GameMenu:
-                clear_win(game->main_win);
                 game_menu(game);
                 break;
+            case GameHelp:
+                game_help(game);
+                break;
             case GameSettings:
-                clear_win(game->main_win);
                 game_settings_menu(game);
                 break;
             case GameSettingsEdit:
-                clear_win(game->main_win);
                 game_settings_edit(game);
                 break;
             case GamePlaying:
