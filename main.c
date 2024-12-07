@@ -169,20 +169,22 @@ void redraw_border(const Game* game) {
     wrefresh(game->bottom_win->win);
 }
 
-void save_config(Game* game) {
+void save_config(const Game* game) {
     FILE* config_save = fopen("config.txt", "w");
+    fprintf(config_save, "border ");
     switch (game->config.border_type) {
         case Simple:
-            fprintf(config_save, "border simple\n");
+            fprintf(config_save, "simple\n");
             break;
         case Clean:
-            fprintf(config_save, "border clean\n");
+            fprintf(config_save, "clean\n");
             break;
         case Wrapped:
-            fprintf(config_save, "border wrapped\n");
+            fprintf(config_save, "wrapped\n");
             break;
     }
     fprintf(config_save, "size %d %d\n", game->config.width, game->config.height);
+    fprintf(config_save, "seed %lld", game->config.seed);
     fclose(config_save);
 }
 
