@@ -2,7 +2,7 @@
 #define GAME_H
 #include "window.h"
 #include "player.h"
-#include "settings.h"
+#include "config.h"
 
 typedef enum {
     GameExit,

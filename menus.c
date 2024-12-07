@@ -1,11 +1,9 @@
 #include "menus.h"
-
+#include "config.h"
+#include "util.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
-
-#include "config.h"
-#include "util.h"
 
 void print_centered_list(Game* game, char** string_list, int list_length) {
     for (int i = 0; i < list_length; i++) {
@@ -37,9 +35,8 @@ int handle_select_menu(Game* game, int key, int max) {
 }
 
 void run_game_main_menu(Game* game) {
-    clear_win(game->top_win);
-    mvwprintw(game->top_win->win, 1, game->main_win->cols / 2 - 3, "FROGGED");
-    wrefresh(game->top_win->win);
+    wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
+    print_top(game, "FROGGED", 1);
     char* select_menu[5] = {"Start Game", "Levels", "How to", "Settings", "Exit"};
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
     print_centered_list(game, select_menu, list_length);
@@ -76,27 +73,25 @@ void run_game_help(Game* game) {
         "(when playing)",
         "",
         "wsad or arrows",
-        "to move"
+        "to move",
+        "",
+        "collect '*' to win",
+        "",
+        "> Back <"
     };
     for (int i = 0; i < sizeof(messages) / sizeof(char*); i++) {
         mvwprintw(game->main_win->win, i + 1, centerX(game, messages[i]), messages[i]);
     }
 
-    char* back = "> Back <";
-    mvwprintw(game->main_win->win, game->main_win->rows * 2 / 3, centerX(game, back), back);
-    wrefresh(game->main_win->win);
-
     int key = wgetch(game->main_win->win);
-    if (key == ' ' || key == 'e') {
+    if (key == 'q' || key == ' ' || key == 'e') {
         game->state = GameMenu;
         game->context_data.menu_data.selected = 2;
-    } else if (key == 'q') {
-        game->state = GameExit;
     }
 }
 
 void run_game_settings_menu(Game* game) {
-    char* select_menu[5] = {"Border", "Size", "Seed", "Frog", "Back"};
+    char* select_menu[5] = {"Back", "Border", "Size", "Seed", "Frog"};
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
     print_centered_list(game, select_menu, list_length);
 
@@ -104,95 +99,114 @@ void run_game_settings_menu(Game* game) {
     if (handle_select_menu(game, key, list_length)) {
         switch (game->context_data.menu_data.selected) {
             case 0:
-            case 1:
-            case 2:
-                game->context_data.menu_data.setting = game->context_data.menu_data.selected;
-                game->state = GameSettingsEdit;
-                break;
-            case 3:
                 game->context_data.menu_data.selected = 3;
                 game->state = GameMenu;
                 break;
-            default: break;
+            default:
+                game->context_data.menu_data.setting = game->context_data.menu_data.selected;
+                game->state = GameSettingsEdit;
+                break;
         }
     }
 }
 
-void run_game_settings_edit(Game* game) {
-    int list_length = 1;
-    char** select_menu = malloc(sizeof(char*));
-    if (game->context_data.menu_data.setting == 0) {
-        free(select_menu);
-        list_length = 4;
-        select_menu = malloc(sizeof(char*) * list_length);
-        select_menu[0] = "Simple";
-        select_menu[1] = "Clean ";
-        select_menu[2] = "Wrapped";
-        select_menu[3] = "Return without saving";
-        char* message = "Selecting will save to file";
-        mvwprintw(game->main_win->win, 1, game->main_win->cols / 2 - (int) strlen(message) / 2, message);
-        char* val = "Current: Simple";
-        switch (game->config.border_type) {
-            case Clean: val = "Current: Clean";
+void settings_border(Game* game) {
+    char* select_menu[4] = {"Simple", "Clean", "Wrapped", "Return without saving"};
+    int select_menu_length = sizeof(select_menu) / sizeof(select_menu[0]);
+    char* message = "Selecting will save to file";
+    mvwprintw(game->main_win->win, 1, game->main_win->cols / 2 - (int) strlen(message) / 2, message);
+    char* val = "Current: Simple";
+    switch (game->config.border_type) {
+        case Clean: val = "Current: Clean";
+            break;
+        case Wrapped: val = "Current: Wrapped";
+            break;
+        default: break;
+    }
+    mvwprintw(game->main_win->win, 5, game->main_win->cols / 2 - (int) strlen(val) / 2, val);
+    print_centered_list(game, select_menu, select_menu_length);
+
+    int key = wgetch(game->main_win->win);
+    if (handle_select_menu(game, key, select_menu_length)) {
+        switch (game->context_data.menu_data.selected) {
+            case 0:
+                game->config.border_type = Simple;
                 break;
-            case Wrapped: val = "Current: Wrapped";
+            case 1:
+                game->config.border_type = Clean;
+                break;
+            case 2:
+                game->config.border_type = Wrapped;
                 break;
             default: break;
         }
-        mvwprintw(game->main_win->win, 5, game->main_win->cols / 2 - (int) strlen(val) / 2, val);
-        print_centered_list(game, select_menu, list_length);
-    } else if (game->context_data.menu_data.setting == 2) {
-        char* message = "Selecting won't save to file";
-        mvwprintw(game->main_win->win, 1, centerX(game, message), message);
-        char* message3 = "Leaving 0 will";
-        mvwprintw(game->main_win->win, 4, centerX(game, message3), message3);
-        char* message4 = "use time(NULL) as seed";
-        mvwprintw(game->main_win->win, 5, centerX(game, message4), message4);
-        char* message2 = "Click TAB to accept";
-        mvwprintw(game->main_win->win, 7, centerX(game, message2), message2);
-        mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 - 10, "> %lld", game->config.seed);
-        mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 + 10, "<");
-        wmove(game->main_win->win, 10, game->main_win->cols / 2 + digit_amount(game->config.seed) - 8);
-        curs_set(1);
-    } else {
-        free(select_menu);
-        select_menu = malloc(sizeof(char*) * list_length);
-        select_menu[0] = "Back";
-        print_centered_list(game, select_menu, list_length);
-    }
-
-    int key = wgetch(game->main_win->win);
-    if (game->context_data.menu_data.setting == 2) {
-        if (key == '\t') {
-            curs_set(0);
-            if (game->config.seed == 0) game->config.seed = time(NULL);
-            game->context_data.menu_data.selected = 0;
-            game->state = GameSettings;
-        } else if (isdigit(key) && game->config.seed <= 9999999999999999) {
-            game->config.seed *= 10;
-            game->config.seed += key - '0';
-        } else if (key == KEY_BACKSPACE && game->config.seed >= 0) {
-            game->config.seed /= 10;
-        }
-    } else if (handle_select_menu(game, key, list_length)) {
-        if (game->context_data.menu_data.setting == 0) {
-            switch (game->context_data.menu_data.selected) {
-                case 0:
-                    game->config.border_type = Simple;
-                    break;
-                case 1:
-                    game->config.border_type = Clean;
-                    break;
-                case 2:
-                    game->config.border_type = Wrapped;
-                    break;
-                default: break;
-            }
-            redraw_game_border(game);
-            save_config(game);
-        }
+        redraw_game_border(game);
+        save_config(&game->config, "config.txt");
         game->context_data.menu_data.selected = 0;
         game->state = GameSettings;
     }
-    free(select_menu);
+}
+
+void settings_size(Game* game) {
+}
+
+void settings_seed(Game* game) {
+    char* messages[] = {"Selecting won't save to file", "Leaving 0 will", "use time(NULL) as seed", "Click E to accept"};
+    mvwprintw(game->main_win->win, 1, centerX(game, messages[0]), messages[0]);
+    mvwprintw(game->main_win->win, 4, centerX(game, messages[1]), messages[1]);
+    mvwprintw(game->main_win->win, 5, centerX(game, messages[2]), messages[2]);
+    mvwprintw(game->main_win->win, 7, centerX(game, messages[3]), messages[3]);
+
+    mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 - 10, "> %lld", game->config.seed);
+    mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 + 10, "<");
+    wmove(game->main_win->win, 10, game->main_win->cols / 2 + digit_amount(game->config.seed) - 8);
+    curs_set(1);
+    int key = wgetch(game->main_win->win);
+    if (key == 'e' || key == 'q' || key == ' ') {
+        curs_set(0);
+        if (game->config.seed == 0) game->config.seed = time(NULL);
+        game->context_data.menu_data.selected = 0;
+        game->state = GameSettings;
+    } else if (isdigit(key) && game->config.seed <= 9999999999999999) {
+        game->config.seed *= 10;
+        game->config.seed += key - '0';
+    } else if (key == KEY_BACKSPACE && game->config.seed >= 0) {
+        game->config.seed /= 10;
+    }
+}
+
+void settings_frog(Game* game) {
+    char* messages[] = {"Type any alphanumeric", "character to set frog"};
+    mvwprintw(game->main_win->win, 2, centerX(game, messages[0]), messages[0]);
+    mvwprintw(game->main_win->win, 3, centerX(game, messages[1]), messages[1]);
+    char* current = "Current:";
+    mvwprintw(game->main_win->win, 6, centerX(game, current)-2, "%s %c", current, game->config.frog);
+
+    int key = wgetch(game->main_win->win);
+    if (key == '\t') {
+        game->context_data.menu_data.selected = 0;
+        game->state = GameSettings;
+    } else if (isalnum(key)) {
+        game->config.frog = (char)key;
+        save_config(&game->config, "config.txt");
+        game->context_data.menu_data.selected = 0;
+        game->state = GameSettings;
+    }
+}
+
+void run_game_settings_edit(Game* game) {
+    switch (game->context_data.menu_data.setting) {
+        case 1:
+            settings_border(game);
+            break;
+        case 2:
+            settings_size(game);
+            break;
+        case 3:
+            settings_seed(game);
+            break;
+        case 4:
+            settings_frog(game);
+            break;
+    }
 }

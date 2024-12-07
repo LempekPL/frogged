@@ -16,8 +16,6 @@ add_executable(frogged main.c
         window.h
         game.c
         game.h
-        settings.c
-        settings.h
         player.c
         player.h
         util.c

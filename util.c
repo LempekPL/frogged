@@ -1,6 +1,5 @@
 #include <limits.h>
 #include "util.h"
-#include "window.h"
 
 int digit_amount(long long n) {
     int r = 1;
@@ -21,4 +20,14 @@ void change_color(Win* win, int color) {
         default: wcolor_set(win->win, GRASS_COL, NULL);
         break;
     }
+}
+
+void print_top(Game* game, char* string, int centered) {
+    clear_win(game->top_win);
+    if (centered) {
+        mvwprintw(game->top_win->win, 1, centerX(game, string), string);
+    } else {
+        mvwprintw(game->top_win->win, 1, 1, string);
+    }
+    wrefresh(game->top_win->win);
 }

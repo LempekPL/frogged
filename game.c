@@ -1,10 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-
 #include "game.h"
-#include "settings.h"
-#include "util.h"
 #include "config.h"
 
 void redraw_game_border(const Game* game) {
@@ -43,38 +39,8 @@ Game* create_game() {
     Game* game = malloc(sizeof(Game));
     game->state = GameMenu;
     game->context_data.menu_data.selected = 0;
+    game->config = load_config("config.txt");
 
-    GameConfig config = {Simple, 31, 21, time(NULL), 'F'};
-    game->config = config;
-    FILE* config_file = fopen("config.txt", "r");
-    if (config_file == NULL) {
-        fclose(config_file);
-        save_config(game);
-    } else {
-        while (!feof(config_file)) {
-            char name[20];
-            fscanf(config_file, "%s", name);
-            if (strcmp(name, "border") == 0) {
-                char border_type[20];
-                fscanf(config_file, "%s", border_type);
-                if (strcmp(border_type, "clean") == 0) game->config.border_type = Clean;
-                else if (strcmp(border_type, "wrapped") == 0) game->config.border_type = Wrapped;
-                else game->config.border_type = Simple;
-            } else if (strcmp(name, "size") == 0) {
-                int tmpW, tmpH;
-                fscanf(config_file, "%d %d", &tmpW, &tmpH);
-                game->config.width = Clamp(tmpW, 31, 1000);
-                game->config.height = Clamp(tmpH, 21, 1000);
-            } else if (strcmp(name, "seed") == 0) {
-                fscanf(config_file, "%ld", &game->config.seed);
-            } else if (strcmp(name, "frog") == 0) {
-                char tmpFrog;
-                fscanf(config_file, "%c", &tmpFrog);
-                game->config.frog = tmpFrog;
-            }
-        }
-        fclose(config_file);
-    }
     srand(game->config.seed);
     game->top_win = create_window(3, game->config.width, 0, 0);
     game->main_win = create_window(game->config.height, game->config.width, 2, 0);
