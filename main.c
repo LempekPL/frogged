@@ -7,10 +7,11 @@
 #define DEFAULT_COL 0
 #define DEFAULT_SWP_COL 1
 #define PLAYER_COL 2
-#define GROUND_COL 3
+#define STREET_COL 3
 #define CAR_COL 4
-#define SAFE_GROUND_COL 5
+#define GRASS_COL 5
 #define WATER_COL 6
+#define GRASS_BLACK_COL 7
 
 #define RA(min, max) ( (min) + rand() % ((max) - (min) + 1) )
 #define Clamp(value, min, max) ( value < min ? min : value > max ? max : value )
@@ -59,9 +60,10 @@ WINDOW* init_ncurses() {
     init_pair(DEFAULT_COL, COLOR_WHITE, COLOR_BLACK);
     init_pair(DEFAULT_SWP_COL, COLOR_BLACK, COLOR_WHITE);
     init_pair(PLAYER_COL, COLOR_WHITE, COLOR_GREEN);
-    init_pair(GROUND_COL, COLOR_WHITE, COLOR_BLACK);
+    init_pair(STREET_COL, COLOR_WHITE, COLOR_BLACK);
     init_pair(WATER_COL, COLOR_WHITE, COLOR_CYAN);
-    init_pair(SAFE_GROUND_COL, COLOR_WHITE, COLOR_GREEN);
+    init_pair(GRASS_COL, COLOR_WHITE, COLOR_GREEN);
+    init_pair(GRASS_BLACK_COL, COLOR_BLACK, COLOR_GREEN);
 
     noecho();
     curs_set(0);
@@ -92,16 +94,6 @@ Player* create_player(int row, int col) {
 ////////////
 
 typedef enum {
-    GameExit,
-    GameMenu,
-    GameHelp,
-    GameSettings,
-    GameSettingsEdit,
-    GamePlaying,
-    GamePaused,
-} GameState;
-
-typedef enum {
     Simple,
     Clean,
     Wrapped
@@ -111,7 +103,17 @@ typedef struct {
     BorderType border_type;
     int width, height;
     long long seed;
+    char frog;
 } GameConfig;
+
+typedef enum {
+    GameExit,
+    GameMenu,
+    GameHelp,
+    GameSettings,
+    GameSettingsEdit,
+    GamePlaying,
+} GameState;
 
 typedef struct {
     int selected;
@@ -119,8 +121,22 @@ typedef struct {
     char text_select[10];
 } MenuData;
 
+typedef enum {
+    PlayingInit,
+    Playing,
+    PlayingKilled,
+    PlayingSuccess,
+} PlayingState;
+
 typedef struct {
+    int x, y;
+} Goal;
+
+typedef struct {
+    int level;
+    PlayingState state;
     Player* player;
+    Goal goal;
     int* lines;
 } GameData;
 
@@ -186,6 +202,7 @@ void save_config(const Game* game) {
     }
     fprintf(config_save, "size %d %d\n", game->config.width, game->config.height);
     fprintf(config_save, "seed %lld", game->config.seed);
+    fprintf(config_save, "frog %c", game->config.frog);
     fclose(config_save);
 }
 
@@ -194,7 +211,7 @@ Game* create_game() {
     game->state = GameMenu;
     game->context_data.menu_data.selected = 0;
 
-    GameConfig config = {Simple, 31, 21, time(NULL)};
+    GameConfig config = {Simple, 31, 21, time(NULL), 'F'};
     game->config = config;
     FILE* config_file = fopen("config.txt", "r");
     if (config_file == NULL) {
@@ -217,20 +234,15 @@ Game* create_game() {
                 game->config.height = Clamp(tmpH, 21, 1000);
             } else if (strcmp(name, "seed") == 0) {
                 fscanf(config_file, "%ld", &game->config.seed);
+            } else if (strcmp(name, "frog") == 0) {
+                char tmpFrog;
+                fscanf(config_file, "%c", &tmpFrog);
+                game->config.frog = tmpFrog;
             }
         }
         fclose(config_file);
     }
     srand(game->config.seed);
-
-    // game->player = create_player(rows - 5, cols / 2);
-    // int* lines = malloc(sizeof(int) * (rows - 5));
-    // for (int i = 0; i < rows - 4; i++) {
-    //     lines[i] = RA(0, 2);
-    // }
-    // lines[rows - 6] = 0;
-    // game->lines = lines;
-
     game->top_win = create_window(3, game->config.width, 0, 0);
     game->main_win = create_window(game->config.height, game->config.width, 2, 0);
     keypad(game->main_win->win, TRUE);
@@ -248,7 +260,8 @@ void print_centered_list(Game* game, char** string_list, int list_length) {
     for (int i = 0; i < list_length; i++) {
         int offset = i == game->context_data.menu_data.selected ? -2 : 0;
         int centeredY = game->main_win->rows / 2 - list_length / 2 + i;
-        mvwprintw(game->main_win->win, centeredY, centerX(game, string_list[i]) + offset, i == game->context_data.menu_data.selected ? "> %s <" : "%s", string_list[i]);
+        mvwprintw(game->main_win->win, centeredY, centerX(game, string_list[i]) + offset,
+                  i == game->context_data.menu_data.selected ? "> %s <" : "%s", string_list[i]);
     }
     wrefresh(game->main_win->win);
 }
@@ -285,6 +298,8 @@ void game_menu(Game* game) {
         switch (game->context_data.menu_data.selected) {
             case 0:
                 game->state = GamePlaying;
+                game->context_data.game_data.level = 1;
+                game->context_data.game_data.state = PlayingInit;
                 break;
             case 2:
                 game->context_data.menu_data.selected = 0;
@@ -303,7 +318,7 @@ void game_menu(Game* game) {
 }
 
 void game_settings_menu(Game* game) {
-    char* select_menu[4] = {"Border", "Size", "Seed", "Back"};
+    char* select_menu[5] = {"Border", "Size", "Seed", "Frog", "Back"};
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
     print_centered_list(game, select_menu, list_length);
 
@@ -415,83 +430,187 @@ void game_settings_edit(Game* game) {
 }
 
 void game_help(Game* game) {
-    char* message1 = "You are a FROG";
-    mvwprintw(game->main_win->win, 2, centerX(game, message1), message1);
+    char* messages[] = {
+        "You are a FROG",
+        "",
+        "q to exit level",
+        "(when playing)",
+        "",
+        "wsad or arrows",
+        "to move"
+    };
+    for (int i = 0; i < sizeof(messages) / sizeof(char*); i++) {
+        mvwprintw(game->main_win->win, i + 1, centerX(game, messages[i]), messages[i]);
+    }
 
     char* back = "> Back <";
     mvwprintw(game->main_win->win, game->main_win->rows * 2 / 3, centerX(game, back), back);
     wrefresh(game->main_win->win);
 
     int key = wgetch(game->main_win->win);
-    if (key == 'q' || key == ' ' || key == 'e') {
+    if (key == ' ' || key == 'e') {
         game->state = GameMenu;
         game->context_data.menu_data.selected = 2;
+    } else if (key == 'q') {
+        game->state = GameExit;
     }
 }
 
-
-typedef enum {
-    None,
-    Exit,
-} CharRet;
-
-// CharRet handle_input(const Game* g) {
-//     usleep(500);
-//     const int ch = wgetch(g->main_win->win);
-//     Player* pl = g->player;
-//     switch (ch) {
-//         case 'w':
-//             if (pl->y > 1) {
-//                 pl->y--;
-//                 g->player->curr_pts++;
-//             } else pl->y = 1;
-//             break;
-//         case 's':
-//             if (pl->y < g->main_win->rows - 2) {
-//                 pl->y++;
-//                 g->player->curr_pts--;
-//             } else pl->y = g->main_win->rows - 2;
-//             break;
-//         case 'a':
-//             if (pl->x > 1) pl->x--;
-//             else pl->x = 1;
-//             break;
-//         case 'd':
-//             if (pl->x < g->main_win->cols - 2) pl->x++;
-//             else pl->x = g->main_win->cols - 2;
-//             break;
-//         case 'q':
-//             return Exit;
-//         default:
-//             return None;
-//     }
-//     return None;
-// }
+////////////////
+/// GAMEPLAY ///
+////////////////
 
 void change_color(Win* win, int color) {
     switch (color) {
-        case 1: wcolor_set(win->win, GROUND_COL, NULL);
+        case 1: wcolor_set(win->win, STREET_COL, NULL);
             break;
         case 2: wcolor_set(win->win, WATER_COL, NULL);
             break;
-        default: wcolor_set(win->win, SAFE_GROUND_COL, NULL);
+        default: wcolor_set(win->win, GRASS_COL, NULL);
             break;
     }
 }
 
-// void draw_frog(const Game* g) {
-//     change_color(g->main_win, g->lines[g->player->y - 1]);
-//     mvwprintw(g->main_win->win, g->player->y, g->player->x, "F");
-// }
+void game_play_init(Game* game) {
+    game->context_data.game_data.player = create_player(game->main_win->rows - 2, game->main_win->cols / 2);
+    game->context_data.game_data.lines = calloc(game->main_win->rows, sizeof(int));
+    switch (game->context_data.game_data.level) {
+        case 1:
+            game->context_data.game_data.goal.x = game->main_win->cols / 2;
+            game->context_data.game_data.goal.y = 1;
+            break;
+        case 2:
+            game->context_data.game_data.lines[game->main_win->rows / 2] = 1;
+            break;
+        default: break;
+    }
 
-// void draw_game(const Game* g) {
-//     for (int i = 1; i < g->main_win->rows - 1; i++) {
-//         change_color(g->main_win, g->lines[i - 1]);
-//         for (int j = 1; j < g->main_win->cols - 1; j++) {
-//             mvwprintw(g->main_win->win, i, j, " ");
-//         }
-//     }
-// }
+    game->context_data.game_data.state = Playing;
+}
+
+void render_lines(Game* game) {
+    for (int i = 1; i < game->main_win->rows - 1; i++) {
+        for (int j = 1; j < game->main_win->cols - 1; j++) {
+            change_color(game->main_win, game->context_data.game_data.lines[i]);
+            mvwprintw(game->main_win->win, i, j, " ");
+        }
+    }
+}
+
+void tutorial_text(Game* game) {
+    wcolor_set(game->main_win->win, GRASS_BLACK_COL, NULL);
+    switch (game->context_data.game_data.level) {
+        case 1:
+            char* helps1[] = {"^ collect to", "complete level", "you move with WSAD", " or arrow keys", "this is you", "a FROG", "V"};
+            mvwprintw(game->main_win->win, 2, game->main_win->cols / 2, helps1[0]);
+            mvwprintw(game->main_win->win, 3, game->main_win->cols / 2, helps1[1]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2, centerX(game, helps1[2]), helps1[2]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, centerX(game, helps1[3]), helps1[3]);
+            mvwprintw(game->main_win->win, game->main_win->rows - 5, centerX(game, helps1[4]), helps1[4]);
+            mvwprintw(game->main_win->win, game->main_win->rows - 4, centerX(game, helps1[5]), helps1[5]);
+            mvwprintw(game->main_win->win, game->main_win->rows - 3, centerX(game, helps1[6]), helps1[6]);
+            break;
+        case 2:
+            char* help1 = "^ this is a road";
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, game->main_win->cols - (int) strlen(help1) - 2, help1);
+            char* help2 = "you need to";
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, game->main_win->cols - (int) strlen(help2) - 2, help2);
+            char* help3 = "avoid o=o";
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, game->main_win->cols - (int) strlen(help3) - 2, help3);
+            break;
+        default: break;
+    }
+}
+
+void draw_goal(const Game* game) {
+    Goal goal = game->context_data.game_data.goal;
+    change_color(game->main_win, game->context_data.game_data.lines[goal.y]);
+    mvwprintw(game->main_win->win, goal.y, goal.x, "*");
+}
+
+void draw_frog(const Game* game) {
+    Player* player = game->context_data.game_data.player;
+    change_color(game->main_win, game->context_data.game_data.lines[player->y]);
+    mvwprintw(game->main_win->win, player->y, player->x, &game->config.frog);
+}
+
+void move_frog(Game* game, int key) {
+    Player* player = game->context_data.game_data.player;
+    switch (key) {
+        case 'w':
+            if (player->y > 1) {
+                player->y--;
+                player->curr_pts++;
+            } else player->y = 1;
+            break;
+        case 's':
+            if (player->y < game->main_win->rows - 2) {
+                player->y++;
+                player->curr_pts--;
+            } else player->y = game->main_win->rows - 2;
+            break;
+        case 'a':
+            if (player->x > 1) player->x--;
+            else player->x = 1;
+            break;
+        case 'd':
+            if (player->x < game->main_win->cols - 2) player->x++;
+            else player->x = game->main_win->cols - 2;
+            break;
+        default: break;
+    }
+}
+
+void collision_win(Game* game) {
+    Goal goal = game->context_data.game_data.goal;
+    Player* player = game->context_data.game_data.player;
+    if (goal.x == player->x && goal.y == player->y) {
+        game->context_data.game_data.state = PlayingSuccess;
+        free(player);
+    }
+}
+
+void game_play_run(Game* game) {
+    clear_win(game->top_win);
+    mvwprintw(game->top_win->win, 1, 2, "Level: %d", game->context_data.game_data.level);
+    render_lines(game);
+    tutorial_text(game);
+    draw_goal(game);
+    draw_frog(game);
+    collision_win(game);
+    int key = wgetch(game->main_win->win);
+    move_frog(game, key);
+    switch (key) {
+        case 'q':
+            game->state = GameMenu;
+            game->context_data.menu_data.selected = 0;
+            break;
+        default: break;
+    }
+}
+
+void game_play_success(Game* game) {
+    clear_win(game->top_win);
+    mvwprintw(game->top_win->win, 1, 2, "Level: %d Success", game->context_data.game_data.level);
+    wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
+    clear_win(game->main_win);
+    wrefresh(game->main_win->win);
+}
+
+void game_play(Game* game) {
+    switch (game->context_data.game_data.state) {
+        case PlayingInit:
+            game_play_init(game);
+            break;
+        case Playing:
+            game_play_run(game);
+            break;
+        case PlayingSuccess:
+            game_play_success(game);
+            break;
+        default: break;
+    }
+}
 
 // void draw_pts(const Game* g) {
 //     mvwprintw(g->top_win->win, 1, 1, "PTS: %d | MAX PTS: %d", g->player->pts, g->player->max_pts);
@@ -506,7 +625,6 @@ void change_color(Win* win, int color) {
 //         game->player->max_pts = game->player->pts;
 //     }
 // }
-
 
 int main() {
     init_ncurses();
@@ -527,8 +645,7 @@ int main() {
                 game_settings_edit(game);
                 break;
             case GamePlaying:
-            // break;
-            case GamePaused:
+                game_play(game);
                 break;
             case GameExit:
                 delwin(game->top_win->win);
@@ -541,13 +658,5 @@ int main() {
                 endwin();
                 return 0;
         }
-        // playing
-        // CharRet code = handle_input(g);
-        // calc_pts(g);
-        // if (code == Exit) break;
-        // clear_win(g->top_bar);
-        // draw_pts(g);
-        // draw_game(g);
-        // draw_frog(g);
     }
 }
