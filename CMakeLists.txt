@@ -3,10 +3,30 @@ project(frogged C)
 
 set(CMAKE_C_STANDARD 11)
 
-include_directories(G:/msys64/mingw64/include)
+if(WIN32)
+    include_directories(G:/msys64/mingw64/include)
+    link_directories(G:/msys64/mingw64/lib)
+else()
+    find_package(Curses REQUIRED)
+    include_directories(${CURSES_INCLUDE_DIR})
+endif()
 
-link_directories(G:/msys64/mingw64/lib)
-
-add_executable(frogged main.c)
+add_executable(frogged main.c
+        window.c
+        window.h
+        game.c
+        game.h
+        settings.c
+        settings.h
+        player.c
+        player.h
+        util.c
+        util.h
+        config.c
+        config.h
+        menus.c
+        menus.h
+        game_loop.c
+        game_loop.h)
 
 target_link_libraries(frogged ncursesw)
