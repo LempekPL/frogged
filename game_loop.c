@@ -16,10 +16,13 @@ void free_game_data(GameData* game_data) {
 void spawn_cars_randomly(const Win* win, Cars* cars, const Lines* lines) {
     for (int i = 0; i < lines->size; i++) {
         Line* line = ptr_at_lines(lines, i);
-        if (line->type == LineRoad && timer_elapsed(&line->spawn_timer, line->next_car)) {
-            line->next_car = RA(line->min_next_car, line->max_next_car);
-            timer_start(&line->spawn_timer);
-            spawn_car_on_line(win, cars, line);
+        if (line->type == LineRoad) {
+            LineCarData* line_data = &line->line_data.car;
+            if (timer_elapsed(&line_data->spawn_timer, line_data->next_car)) {
+                line_data->next_car = RA(line_data->min_next_car, line_data->max_next_car);
+                timer_start(&line_data->spawn_timer);
+                spawn_car_on_line(win, cars, line);
+            }
         }
     }
 }

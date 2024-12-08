@@ -60,38 +60,41 @@ void game_levels_init(Game* game) {
     game_data->lines = generate_default_lines(game->main_win->rows);
     game_data->goal.x = game->main_win->cols / 2;
     game_data->goal.y = 1;
-    Line line;
+    Line line = new_line_car(LineRoad, game->main_win->rows / 2, ToLeft, 200, 100, 1000, 6000);
     switch (game_data->level) {
         case 1:
             break;
         case 2:
-            line = new_line_ext(LineRoad, game->main_win->rows / 2, ToLeft, 200, 100, 1000, 6000);
             replace_self_lines(game_data->lines, &line);
             break;
         case 3:
-            line = new_line_ext(LineRoad, game->main_win->rows / 2, ToRight, 200, 100, 1000, 6000);
-            line.stopper_chance = 1;
+            line.line_data.car.stopper_chance = 1;
             replace_self_lines(game_data->lines, &line);
             break;
         case 4:
-            line = new_line_ext(LineRoad, game->main_win->rows / 2, ToRight, 200, 100, 1000, 6000);
-            line.stopper_chance = .2;
+            line.line_data.car.stopper_chance = .2;
             line.y = game->main_win->rows / 2 - 1;
             replace_self_lines(game_data->lines, &line);
-            line.stopper_chance = .5;
+
+            line.line_data.car.stopper_chance = .5;
             line.y = game->main_win->rows / 2 + 1;
             replace_self_lines(game_data->lines, &line);
             break;
         case 5:
-            line = new_line_ext(LineRoad, game->main_win->rows / 2, ToRight, 100, 100, 2000, 6000);
-            line.stopper_chance = .2;
+            line.line_data.car.line_speed_limit = 100;
+            line.line_data.car.min_next_car = 2000;
+            line.line_data.car.max_next_car = 6000;
+            line.line_data.car.line_speed_limit = 100;
+            line.line_data.car.stopper_chance = .2;
             line.y = game->main_win->rows / 2 + 1;
             replace_self_lines(game_data->lines, &line);
-            line.stopper_chance = .25;
+
+            line.line_data.car.stopper_chance = .25;
             line.y = game->main_win->rows / 2;
             replace_self_lines(game_data->lines, &line);
-            line.cars_direction = ToLeft;
-            line.max_next_car = 3000;
+
+            line.line_data.car.cars_direction = ToRight;
+            line.line_data.car.max_next_car = 3000;
             line.y = game->main_win->rows / 2 - 1;
             replace_self_lines(game_data->lines, &line);
         case 6:

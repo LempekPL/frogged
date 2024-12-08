@@ -107,12 +107,13 @@ void spawn_car_on_line(const Win* win, Cars* cars, const Line* line) {
     float speed_change_chance = (float) rand() / (float) RAND_MAX;
     Timer timer;
     timer_start(&timer);
-    Car car = {1, line->y, line->line_speed_limit, speed_change_chance, CarEnemy, line->cars_direction, timer};
-    if (line->cars_direction == ToLeft) {
+    const LineCarData* line_data = &line->line_data.car;
+    Car car = {1, line->y, line_data->line_speed_limit, speed_change_chance, CarEnemy, line_data->cars_direction, timer};
+    if (line_data->cars_direction == ToLeft) {
         car.x = win->cols - 4;
     }
     float chance = (float) rand() / (float) RAND_MAX;
-    if (chance <= line->stopper_chance) {
+    if (chance <= line_data->stopper_chance) {
         car.car_type = CarStopping;
     }
     if (is_area_clear(win, car.y, car.x)) {

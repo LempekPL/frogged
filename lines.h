@@ -4,24 +4,42 @@
 #include "window.h"
 
 typedef enum {
-    LineGrass,
-    LineRoad,
-    LineWater,
-} LineType;
-
-typedef enum {
     DirToLeft,
     DirToRight,
 } LineDirection;
 
-typedef struct LineStruct {
-    LineType type;
-    int y;
+typedef struct {
     LineDirection cars_direction;
     int next_car, min_next_car, max_next_car;
     Timer spawn_timer;
     int line_speed_limit;
     float stopper_chance; // 1 - 100%, 0 - 0%
+} LineCarData;
+
+typedef struct {
+
+} LineGrassData;
+
+typedef struct {
+
+} LineWaterData;
+
+typedef union {
+    LineCarData car;
+    LineGrassData grass;
+    LineWaterData water;
+} LineData;
+
+typedef enum {
+    LineGrass,
+    LineRoad,
+    LineWater,
+} LineType;
+
+typedef struct LineStruct {
+    LineType type;
+    int y;
+    LineData line_data;
 } Line;
 
 typedef struct LinesStruct {
@@ -31,7 +49,7 @@ typedef struct LinesStruct {
 } Lines;
 
 Line new_line(LineType type, int y);
-Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car);
+Line new_line_car(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car);
 Lines* generate_default_lines(int height);
 Lines* new_lines(int capacity);
 void add_line(Lines* lines, const Line* line);

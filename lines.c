@@ -20,22 +20,30 @@ void draw_lines(const Win* win, Lines* lines) {
 }
 
 Line new_line(LineType type, int y) {
-    Timer timer;
-    timer_start(&timer);
-    Line line = {type, y, ToRight, -1, 0, 0,  timer, 0, 0};
+    Line line = {type, y};
     if (type == LineRoad) {
-        line.next_car = RA(0, 100);
-        line.min_next_car = 800;
-        line.max_next_car = 1200;
-        line.line_speed_limit = 200;
+        Timer timer;
+        timer_start(&timer);
+        line.line_data.car.spawn_timer = timer;
+        line.line_data.car.next_car = RA(0, 100);
+        line.line_data.car.min_next_car = 800;
+        line.line_data.car.max_next_car = 1200;
+        line.line_data.car.line_speed_limit = 200;
     }
     return line;
 }
 
-Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car) {
+Line new_line_car(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car) {
+    Line line = {type, y};
     Timer timer;
     timer_start(&timer);
-    Line line = {type, y, direction, next_car_in, min_next_car, max_next_car, timer, speed_limit, 0};
+    line.line_data.car.spawn_timer = timer;
+    line.line_data.car.next_car = next_car_in;
+    line.line_data.car.cars_direction = direction;
+    line.line_data.car.min_next_car = min_next_car;
+    line.line_data.car.max_next_car = max_next_car;
+    line.line_data.car.line_speed_limit = speed_limit;
+    line.line_data.car.stopper_chance = 0;
     return line;
 }
 
