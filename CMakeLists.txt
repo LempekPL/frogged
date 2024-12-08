@@ -31,6 +31,8 @@ add_executable(frogged main.c
         timer.c
         timer.h
         lines.c
-        lines.h)
+        lines.h
+        levels.c
+        levels.h)
 
 target_link_libraries(frogged ncursesw)

@@ -19,7 +19,6 @@
 
 ///////////////////////////////////////////////////
 /// TODO LIST:
-/// - cars but different speeds
 /// - config size
 /// - trees/logs
 /// - cars but friendly
@@ -35,6 +34,12 @@ int main() {
         switch (game->state) {
             case GameMenu:
                 run_game_main_menu(game);
+                break;
+            case GameMenuStart:
+                // run_game_start_menu(game);
+                break;
+            case GameMenuLevels:
+                // run_game_levels_menu(game);
                 break;
             case GameHelp:
                 run_game_help(game);

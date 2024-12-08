@@ -12,6 +12,8 @@ typedef enum {
     GameHelp,
     GameSettings,
     GameSettingsEdit,
+    GameMenuStart,
+    GameMenuLevels,
     GamePlaying,
 } GameState;
 
@@ -21,8 +23,10 @@ typedef struct {
 } MenuData;
 
 typedef enum {
-    PlayingInit,
-    Playing,
+    PlayingInitLevels,
+    PlayingLevels,
+    PlayingInitEndless,
+    PlayingEndless,
     PlayingKilled,
     PlayingSuccess,
 } PlayingState;

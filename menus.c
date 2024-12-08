@@ -47,7 +47,7 @@ void run_game_main_menu(Game* game) {
             case 0:
                 game->state = GamePlaying;
                 game->context_data.game_data.level = 1;
-                game->context_data.game_data.state = PlayingInit;
+                game->context_data.game_data.state = PlayingInitLevels;
                 break;
             case 2:
                 game->context_data.menu_data.selected = 0;
@@ -240,7 +240,7 @@ void run_game_success_menu(Game* game) {
             case 0:
                 game->state = GamePlaying;
                 game->context_data.game_data.level += 1;
-                game->context_data.game_data.state = PlayingInit;
+                game->context_data.game_data.state = PlayingInitLevels;
                 break;
             case 1:
                 break;
@@ -271,7 +271,7 @@ void run_game_killed_menu(Game* game) {
         switch (game->context_data.game_data.end_select) {
             case 0:
                 game->state = GamePlaying;
-                game->context_data.game_data.state = PlayingInit;
+                game->context_data.game_data.state = PlayingInitLevels;
                 break;
             case 1:
                 break;
