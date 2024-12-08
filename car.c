@@ -1,6 +1,8 @@
 #include "car.h"
 #include <stdlib.h>
 
+#include "util.h"
+
 void draw_car(const Win* win, const Car car) {
     switch (car.car_type) {
         case CarEnemy:
@@ -36,17 +38,18 @@ int is_next_empty(const Win* win, const Player* player, Car* car) {
     }
     int next_char = mvwinch(win->win, car->y, car->x+move+car_size) & A_CHARTEXT;
     int next_char_after = mvwinch(win->win, car->y, car->x+move*2+car_size) & A_CHARTEXT;
-    if (!(next_char == 'o' && next_char_after == '=')) {
-        if (car->car_type != CarStopping || next_char != player->character) {
-            return 1;
-        }
+    if (!(next_char == 'o' && next_char_after == '=') && (car->car_type != CarStopping || next_char != player->character)) {
+        return 1;
     }
     return 0;
 }
 
 int move_car(const Win* win, const Player* player, Car* car, int max) {
     if (timer_elapsed(&car->timer, car->speed)) {
-        timer_start(&car->timer);
+        float chance = (float) rand() / (float) RAND_MAX;
+        if (chance <= car->random_speed_change_chance) {
+            car->speed = Clamp(car->speed+ RA(-100, 100), 100, 1000);
+        }
         int move = 0;
         switch (car->car_ride) {
             case ToLeft:
@@ -59,7 +62,7 @@ int move_car(const Win* win, const Player* player, Car* car, int max) {
         if (is_next_empty(win, player, car)) {
             car->x += move;
         }
-
+        timer_start(&car->timer);
         if (car->x < 1 || max < car->x + 4) {
             return 1;
         }

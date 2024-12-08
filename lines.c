@@ -1,6 +1,5 @@
-#include "game_lines.h"
+#include "lines.h"
 #include <stdlib.h>
-
 #include "util.h"
 
 void draw_line(const Win* win, const Line line) {

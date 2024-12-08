@@ -3,7 +3,7 @@
 #include "window.h"
 #include "player.h"
 #include "config.h"
-#include "game_lines.h"
+#include "lines.h"
 #include "car.h"
 
 typedef enum {

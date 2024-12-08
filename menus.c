@@ -224,8 +224,8 @@ void run_game_settings_edit(Game* game) {
 }
 
 void run_game_success_menu(Game* game) {
-    char level_name[24];
-    sprintf(level_name, " Level: %d Success", game->context_data.game_data.level);
+    char level_name[26];
+    sprintf(level_name, " Level: %d Completed", game->context_data.game_data.level);
     print_top(game, level_name, 0);
     wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
     char* message = "YOU DID IT!!!";

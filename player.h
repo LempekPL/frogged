@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 #include "window.h"
-#include "game_lines.h"
+#include "lines.h"
 
 typedef struct {
     int x, y;

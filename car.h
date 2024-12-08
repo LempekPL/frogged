@@ -2,7 +2,7 @@
 #define CAR_H
 #include "timer.h"
 #include "window.h"
-#include "game_lines.h"
+#include "lines.h"
 #include "player.h"
 
 typedef enum {
