@@ -50,7 +50,7 @@ void draw_goal(const Game* game) {
 
 void game_levels_init(Game* game) {
     GameData* game_data = &game->context_data.game_data;
-    game_data->player = create_player(game->main_win->rows - 2, game->main_win->cols / 2, game->config.frog);
+    game_data->player = create_player(game->main_win->rows - 2, game->main_win->cols / 2, game->config.frog, game->config.cooldown);
     game_data->cars = new_cars(2);
     game_data->lines = generate_default_lines(game->main_win->rows);
     game_data->goal.x = game->main_win->cols / 2;

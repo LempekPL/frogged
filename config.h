@@ -12,6 +12,7 @@ typedef struct {
     int width, height;
     long long seed;
     char frog;
+    int cooldown;
 } GameConfig;
 
 void save_config(GameConfig*, char* path_name);

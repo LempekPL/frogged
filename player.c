@@ -1,14 +1,17 @@
 #include "player.h"
-#include <stdlib.h>
-
 #include "game_loop.h"
 #include "util.h"
+#include <stdlib.h>
 
-Player* create_player(const int row, const int col, const char character) {
+Player* create_player(const int row, const int col, const char character, const int cooldown) {
+    Timer timer;
+    timer_start(&timer);
     Player* player = malloc(sizeof(Player));
     player->y = row;
     player->x = col;
     player->character = character;
+    player->timer = timer;
+    player->cooldown = cooldown;
     player->curr_pts = 0;
     player->max_pts = 0;
     player->pts = 0;
@@ -37,27 +40,34 @@ void draw_player(const Win* win, const Player* player, const Lines* lines) {
 }
 
 void move_player(Player* player, const int key, const int maxX, const int maxY) {
+    int dx = 0, dy = 0;
     switch (key) {
         case 'w':
-            if (player->y > 1) {
-                player->y--;
-                player->curr_pts++;
-            } else player->y = 1;
-        break;
+        case KEY_UP:
+            dy = -1;
+            break;
         case 's':
-            if (player->y < maxY) {
-                player->y++;
-                player->curr_pts--;
-            } else player->y = maxY;
-        break;
+        case KEY_DOWN:
+            dy = 1;
+            break;
         case 'a':
-            if (player->x > 1) player->x--;
-            else player->x = 1;
-        break;
+        case KEY_LEFT:
+            dx = -1;
+            break;
         case 'd':
-            if (player->x < maxX) player->x++;
-            else player->x = maxX;
-        break;
-        default: break;
+        case KEY_RIGHT:
+            dx = 1;
+            break;
+        default: return;
+    }
+    if (timer_elapsed(&player->timer, player->cooldown)) {
+        timer_start(&player->timer);
+        if (dx != 0 && player->x + dx >= 1 && player->x + dx <= maxX) {
+            player->x += dx;
+        }
+        if (dy != 0 && player->y + dy >= 1 && player->y + dy <= maxY) {
+            player->y += dy;
+            player->curr_pts += dy == 1 ? -1 : 1;
+        }
     }
 }

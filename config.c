@@ -20,11 +20,12 @@ void save_config(GameConfig* config, char* path_name) {
     fprintf(config_save, "size %d %d\n", config->width, config->height);
     fprintf(config_save, "seed %lld\n", config->seed);
     fprintf(config_save, "frog %c\n", config->frog);
+    fprintf(config_save, "cooldown %d\n", config->cooldown);
     fclose(config_save);
 }
 
 GameConfig load_config(char* path_name) {
-    GameConfig config = {Simple, 31, 21, time(NULL), 'F'};
+    GameConfig config = {Simple, 31, 21, time(NULL), 'F', 200};
     FILE* config_file = fopen(path_name, "r");
     if (config_file == NULL) {
         fclose(config_file);
@@ -48,9 +49,13 @@ GameConfig load_config(char* path_name) {
         } else if (strcmp(name, "seed") == 0) {
             fscanf(config_file, "%ld", &config.seed);
         } else if (strcmp(name, "frog") == 0) {
-            char tmpFrog;
-            fscanf(config_file, "%c", &tmpFrog);
-            config.frog = tmpFrog;
+            char tmp_frog;
+            fscanf(config_file, "%c", &tmp_frog);
+            config.frog = tmp_frog;
+        } else if (strcmp(name, "cooldown") == 0) {
+            int tmp_cooldown;
+            fscanf(config_file, "%d", &tmp_cooldown);
+            config.cooldown = Clamp(tmp_cooldown, 0, 10000);
         }
     }
     fclose(config_file);
