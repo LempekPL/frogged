@@ -3,14 +3,6 @@ project(frogged C)
 
 set(CMAKE_C_STANDARD 11)
 
-if(WIN32)
-    include_directories(G:/msys64/mingw64/include)
-    link_directories(G:/msys64/mingw64/lib)
-else()
-    find_package(Curses REQUIRED)
-    include_directories(${CURSES_INCLUDE_DIR})
-endif()
-
 add_executable(frogged main.c
         window.c
         window.h
@@ -36,5 +28,14 @@ add_executable(frogged main.c
         levels.h
         endless.c
         endless.h)
+
+if(WIN32)
+    include_directories(G:/msys64/mingw64/include)
+    link_directories(G:/msys64/mingw64/lib)
+else()
+    find_package(Curses REQUIRED)
+    include_directories(${CURSES_INCLUDE_DIR})
+    target_link_libraries(frogged ${CURSES_LIBRARIES})
+endif()
 
 target_link_libraries(frogged ncursesw)
