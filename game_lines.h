@@ -20,6 +20,7 @@ typedef struct {
     LineDirection cars_direction;
     int car_freq, min_random, max_random;
     Timer spawn_timer;
+    float stopper_chance; // 1 - 100%, 0 - 0%
 } Line;
 
 typedef struct {

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "util.h"
 
-Player* create_player(int row, int col, char character) {
+Player* create_player(const int row, const int col, const char character) {
     Player* player = malloc(sizeof(Player));
     player->y = row;
     player->x = col;
@@ -16,7 +16,7 @@ Player* create_player(int row, int col, char character) {
 void draw_player(const Win* win, const Player* player, const Lines* lines) {
     Line* line = ptr_at_lines(lines, player->y);
     change_color(win, line->type);
-    mvwprintw(win->win, player->y, player->x, &player->character);
+    mvwprintw(win->win, player->y, player->x, "%c", player->character);
 }
 
 void move_player(Player* player, const int key, const int maxX, const int maxY) {

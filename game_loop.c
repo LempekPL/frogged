@@ -15,8 +15,13 @@ void game_play_init(Game* game) {
             game_data->goal.y = 1;
             break;
         case 2:
-            Line line = new_line_ext(LineRoad, game->main_win->rows / 2, DirToLeft, RA(0, 100), 1000, 6000);
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2);
+            Line line1 = new_line_ext(LineRoad, game->main_win->rows / 2, DirToLeft, RA(0, 100), 1000, 6000);
+            replace_at_lines(game_data->lines, &line1, game->main_win->rows / 2);
+            break;
+        case 3:
+            Line line2 = new_line_ext(LineRoad, game->main_win->rows / 2, DirToLeft, RA(0, 100), 1000, 6000);
+            line2.stopper_chance = 1;
+            replace_at_lines(game_data->lines, &line2, game->main_win->rows / 2);
             break;
         default: break;
     }
@@ -44,11 +49,22 @@ void draw_tutorial_text(Game* game) {
             break;
         case 2:
             char* helps2[] = {"^ this is a road", "you need to", "avoid ", "o=o"};
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, game->main_win->cols - (int) strlen(helps2[0]) - 2, helps2[0]);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, game->main_win->cols - (int) strlen(helps2[1]) - 2, helps2[1]);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, game->main_win->cols - (int) strlen(helps2[2]) - 2 - 3, helps2[2]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, centerX(game, helps2[0]) + 6, helps2[0]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps2[1]) + 6, helps2[1]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps2[2]) + 5, helps2[2]);
             wcolor_set(game->main_win->win, ROAD_RED_COL, NULL);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, game->main_win->cols - (int) strlen(helps2[3]) - 2, helps2[3]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps2[3]) + 9, helps2[3]);
+        break;
+        case 3:
+            char* helps3[] = {"this is stopper", "it stops", "in front of you", "o=o", "this car can still", "kill you if you", "run into it"};
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, centerX(game, helps3[0]) + 5, helps3[0]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps3[1]) + 8, helps3[1]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps3[2]) + 5, helps3[2]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 4, centerX(game, helps3[4]) + 5, helps3[4]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 5, centerX(game, helps3[5]) + 5, helps3[5]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 6, centerX(game, helps3[6]) + 5, helps3[6]);
+            wcolor_set(game->main_win->win, ROAD_YELLOW_COL, NULL);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps3[3]) + 2, helps3[3]);
             break;
         default: break;
     }
@@ -88,7 +104,11 @@ void spawn_cars_randomly(Win* win, Cars* cars, Lines* lines) {
             mvwprintw(win->win, 1, 1, "%d", line->car_freq);
             line->car_freq = RA(line->min_random, line->max_random);
             timer_start(&line->spawn_timer);
+            float chance = (float)rand() / (float)RAND_MAX;
             Car car = spawn_car_on_line(win, *line, 200, CarEnemy);
+            if (chance <= line->stopper_chance) {
+                car.car_type = CarStopping;
+            }
             add_car(cars, &car);
         }
     }
@@ -109,7 +129,7 @@ void game_play_run(Game* game) {
 
     int key = wgetch(game->main_win->win);
     move_player(game_data->player, key, game->main_win->cols - 2, game->main_win->rows - 2);
-    move_cars(game_data->cars, game->main_win->cols);
+    move_cars(game->main_win, game_data->player, game_data->cars, game->main_win->cols);
     collision(game);
     if (key == 'q') {
         game->state = GameMenu;

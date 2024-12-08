@@ -11,6 +11,7 @@
 #define GRASS_BLACK_COL 7
 #define ROAD_RED_COL 8
 #define ROAD_GREEN_COL 9
+#define ROAD_YELLOW_COL 10
 
 #if defined(_WIN32) || defined(_WIN64) // Windows
 #include <ncursesw/ncurses.h>

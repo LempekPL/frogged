@@ -7,7 +7,7 @@ void draw_car(const Win* win, const Car car) {
             wcolor_set(win->win, ROAD_RED_COL, NULL);
             break;
         case CarStopping:
-            wcolor_set(win->win, DEFAULT_COL, NULL);
+            wcolor_set(win->win, ROAD_YELLOW_COL, NULL);
             break;
         case CarFriendly:
             wcolor_set(win->win, ROAD_RED_COL, NULL);
@@ -22,7 +22,7 @@ void draw_cars(const Win* win, Cars* cars) {
     }
 }
 
-int move_car(Car* car, int max) {
+int move_car(const Win* win, const Player* player, Car* car, int max) {
     if (timer_elapsed(&car->timer, car->speed)) {
         timer_start(&car->timer);
         int move = 0;
@@ -34,7 +34,12 @@ int move_car(Car* car, int max) {
                 move = 1;
                 break;
         }
-        car->x += move;
+        int ch = mvwinch(win->win, car->y, car->x+move) & A_CHARTEXT;
+        if (ch != 'o') {
+            if (car->car_type != CarStopping || ch != player->character) {
+                car->x += move;
+            }
+        }
         if (car->x < 1 || max < car->x + 4) {
             return 1;
         }
@@ -42,9 +47,9 @@ int move_car(Car* car, int max) {
     return 0;
 }
 
-void move_cars(Cars* cars, int max) {
+void move_cars(const Win* win, const Player* player, Cars* cars, int max) {
     for (int i = 0; i < cars->size; i++) {
-        int outside = move_car(&cars->cars[i], max);
+        int outside = move_car(win, player, &cars->cars[i], max);
         if (outside) {
             remove_at_cars(cars, i);
         }
@@ -63,7 +68,7 @@ Car spawn_car_on_line(const Win* win, Line line, int move_per_ms, CarType car_ty
     timer_start(&timer);
     Car car = {1, line.y, move_per_ms, car_type, line.cars_direction, timer};
     if (line.cars_direction == ToLeft) {
-        car.x = win->cols-4;
+        car.x = win->cols - 4;
     }
     return car;
 }

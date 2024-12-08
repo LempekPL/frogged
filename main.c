@@ -19,7 +19,6 @@
 
 ///////////////////////////////////////////////////
 /// TODO LIST:
-/// - cars
 /// - cars but different speeds
 /// - config size
 /// - trees/logs
