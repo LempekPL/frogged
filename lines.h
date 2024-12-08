@@ -21,7 +21,8 @@ typedef struct {
 } LineGrassData;
 
 typedef struct {
-
+    int* logs;
+    int logs_amount;
 } LineWaterData;
 
 typedef union {

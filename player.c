@@ -18,15 +18,31 @@ Player* create_player(const int row, const int col, const char character, const 
     return player;
 }
 
+int is_on_log(Player* player, LineWaterData* line_data) {
+    for (int i = 0; i < line_data->logs_amount; i++) {
+        if (player->x == line_data->logs[i]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 PlayerCollision collision_player(const GameData* game_data) {
     Goal goal = game_data->goal;
     Player* player = game_data->player;
+    Line* line = &game_data->lines->lines[player->y];
     if (goal.x == player->x && goal.y == player->y) {
         return PlayerTouchGoal;
     }
     for (int i = 0; i < game_data->cars->size; i++) {
         Car* car = ptr_at_cars(game_data->cars, i);
         if (car->y == player->y && car->x <= player->x && car->x + 3 > player->x) {
+            return PlayerTouchDeath;
+        }
+    }
+    if (line->type == LineWater) {
+        LineWaterData line_data = line->line_data.water;
+        if (!is_on_log(player, &line_data)) {
             return PlayerTouchDeath;
         }
     }

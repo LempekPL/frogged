@@ -2,20 +2,29 @@
 #include <stdlib.h>
 #include "util.h"
 
-void draw_line(const Win* win, const Line line, const int splitter) {
+int is_log(const Line* line, const int x) {
+    for (int i = 0; i < line->line_data.water.logs_amount; i++) {
+        if (line->line_data.water.logs[i] == x) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void draw_line(const Win* win, const Line line, const LineType bottom_road_type) {
     change_color(win, line.type);
     for (int i = 1; i < win->cols - 1; i++) {
-        mvwprintw(win->win, line.y, i, splitter == 1 && i % 2 == 0 ? "_" : " ");
+        if (line.type == LineWater) {
+            mvwprintw(win->win, line.y, i, is_log(&line, i) ? "#" : " ");
+        } else {
+            mvwprintw(win->win, line.y, i, line.type == LineRoad && bottom_road_type == LineRoad && i % 2 == 0 ? "_" : " ");
+        }
     }
 }
 
 void draw_lines(const Win* win, Lines* lines) {
     for (int i = 1; i < win->rows - 1; i++) {
-        int splitter = 0;
-        if (i < lines->size && lines->lines[i+1].type == LineRoad && lines->lines[i].type == LineRoad) {
-            splitter = 1;
-        }
-        draw_line(win, lines->lines[i], splitter);
+        draw_line(win, lines->lines[i], lines->lines[i + 1].type);
     }
 }
 
@@ -65,7 +74,7 @@ void add_line(Lines* lines, const Line* line) {
 }
 
 void shift_at_lines(Lines* lines, const Line* line, int index) {
-    if (lines->size+1 >= lines->capacity) {
+    if (lines->size + 1 >= lines->capacity) {
         lines->capacity *= 2;
         lines->lines = realloc(lines->lines, lines->capacity * sizeof(Line));
     }
@@ -73,7 +82,7 @@ void shift_at_lines(Lines* lines, const Line* line, int index) {
         exit(EXIT_FAILURE);
     }
     for (int i = index; i < lines->size - 1; i++) {
-        lines->lines[i+1] = lines->lines[i];
+        lines->lines[i + 1] = lines->lines[i];
     }
     lines->lines[index] = *line;
     lines->size++;
@@ -121,12 +130,22 @@ void remove_at_lines(Lines* lines, int index) {
 }
 
 void clear_lines(Lines* lines) {
+    for (int i = 0; i < lines->size; i++) {
+        if (lines->lines[i].type == LineWater && lines->lines[i].line_data.water.logs != NULL) {
+            free(lines->lines[i].line_data.water.logs);
+        }
+    }
     free(lines->lines);
     lines->lines = malloc(sizeof(Line) * lines->capacity);
     lines->size = 0;
 }
 
 void free_lines(Lines* lines) {
+    for (int i = 0; i < lines->size; i++) {
+        if (lines->lines[i].type == LineWater && lines->lines[i].line_data.water.logs != NULL) {
+            free(lines->lines[i].line_data.water.logs);
+        }
+    }
     free(lines->lines);
     free(lines);
 }

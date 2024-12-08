@@ -3,7 +3,7 @@
 #include "game_loop.h"
 #include <stdlib.h>
 
-void draw_tutorial_text(Game* game) {
+void draw_tutorial_text(const Game* game) {
     wcolor_set(game->main_win->win, GRASS_BLACK_COL, NULL);
     switch (game->context_data.game_data.level) {
         case 1:
@@ -17,12 +17,12 @@ void draw_tutorial_text(Game* game) {
             mvwprintw(game->main_win->win, game->main_win->rows - 3, centerX(game, helps1[6]), helps1[6]);
             break;
         case 2:
-            char* helps2[] = {"^ this is a road", "you need to", "avoid ", "o=o"};
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, centerX(game, helps2[0]) + 6, helps2[0]);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps2[1]) + 6, helps2[1]);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps2[2]) + 5, helps2[2]);
+            char* helps2[] = {"^ road", "you need to", "avoid    ", "o=o"};
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, rightX(game, helps2[0]) - 2, helps2[0]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, rightX(game, helps2[1]) - 2, helps2[1]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, rightX(game, helps2[2]) - 1, helps2[2]);
             wcolor_set(game->main_win->win, ROAD_RED_COL, NULL);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps2[3]) + 9, helps2[3]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, rightX(game, helps2[3]) - 1, helps2[3]);
             break;
         case 3:
             char* helps3[] = {
@@ -41,6 +41,15 @@ void draw_tutorial_text(Game* game) {
             char* helps4[] = {"now try it without", "any help :)"};
             mvwprintw(game->main_win->win, 4, centerX(game, helps4[0]), helps4[0]);
             mvwprintw(game->main_win->win, 5, centerX(game, helps4[1]), helps4[1]);
+        break;
+        case 6:
+            char* helps6[] = {"^ water", "it kills you", "use logs", "#", "to move"};
+            mvwprintw(game->main_win->win, game->main_win->rows / 2+1, 2, helps6[0]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2+2, 2, helps6[1]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2+1, rightX(game, helps6[2])-1, helps6[2]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2+2, rightX(game, helps6[4])-1, helps6[4]);
+            wcolor_set(game->main_win->win, WATER_COL, NULL);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2+2, rightX(game, helps6[3])-(int)strlen(helps6[4])-2, helps6[3]);
             break;
         default: break;
     }
@@ -97,11 +106,81 @@ void game_levels_init(Game* game) {
             line.line_data.car.max_next_car = 3000;
             line.y = game->main_win->rows / 2 - 1;
             replace_self_lines(game_data->lines, &line);
+            break;
         case 6:
+            line = new_line(LineWater, game->main_win->rows / 2);
+            int* logs = malloc(sizeof(int) * 3);
+            logs[0] = game->main_win->cols / 2;
+            logs[1] = game->main_win->cols / 2 + 1;
+            logs[2] = game->main_win->cols / 2 - 1;
+            line.line_data.water.logs = logs;
+            line.line_data.water.logs_amount = 3;
+            replace_self_lines(game_data->lines, &line);
+            break;
         case 7:
+            line.line_data.car.line_speed_limit = 100;
+            line.line_data.car.min_next_car = 2000;
+            line.line_data.car.max_next_car = 6000;
+            line.line_data.car.line_speed_limit = 100;
+            line.line_data.car.stopper_chance = .2;
+            line.y = game->main_win->rows / 2 + 1;
+            replace_self_lines(game_data->lines, &line);
+
+            line.line_data.car.stopper_chance = .25;
+            line.y = game->main_win->rows / 2;
+            replace_self_lines(game_data->lines, &line);
+
+            line.line_data.car.cars_direction = ToRight;
+            line.line_data.car.max_next_car = 3000;
+            line.y = game->main_win->rows / 2 - 1;
+            replace_self_lines(game_data->lines, &line);
+
+            line = new_line(LineWater, game->main_win->rows / 2);
+            int* logs2 = malloc(sizeof(int) * 3);
+            logs2[0] = game->main_win->cols / 2;
+            logs2[1] = game->main_win->cols / 2 + 1;
+            logs2[2] = game->main_win->cols / 2 - 1;
+            line.line_data.water.logs = logs2;
+            line.line_data.water.logs_amount = 3;
+            replace_self_lines(game_data->lines, &line);
+            break;
         case 8:
+            line.line_data.car.line_speed_limit = 100;
+            line.line_data.car.min_next_car = 2000;
+            line.line_data.car.max_next_car = 6000;
+            line.line_data.car.line_speed_limit = 200;
+            line.line_data.car.stopper_chance = .2;
+            line.y = game->main_win->rows / 2 - 6;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 - 5;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 - 4;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 - 3;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 - 2;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 - 1;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 + 1;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 + 2;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 + 3;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 + 4;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 + 5;
+            replace_self_lines(game_data->lines, &line);
+            line.y = game->main_win->rows / 2 + 6;
+            replace_self_lines(game_data->lines, &line);
+            break;
         case 9:
+            break;
         case 10:
+            break;
         default: break;
     }
     game_data->state = PlayingLevels;
