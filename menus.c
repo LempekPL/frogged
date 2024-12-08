@@ -253,3 +253,34 @@ void run_game_success_menu(Game* game) {
         }
     }
 }
+
+void run_game_killed_menu(Game* game) {
+    char level_name[24];
+    sprintf(level_name, " Level: %d Failed", game->context_data.game_data.level);
+    print_top(game, level_name, 0);
+    wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
+    char* message = "YOU FAILED!!!";
+    mvwprintw(game->main_win->win, 4, centerX(game, message), message);
+    char* select_menu[4] = {"Try again", "Levels", "Main Menu", "Exit"};
+    int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
+    print_centered_list(game, game->context_data.game_data.end_select, select_menu, list_length);
+
+    int key = wgetch(game->main_win->win);
+    if (handle_select_menu(&game->context_data.game_data.end_select, key, list_length)) {
+        switch (game->context_data.game_data.end_select) {
+            case 0:
+                game->state = GamePlaying;
+                game->context_data.game_data.state = PlayingInit;
+                break;
+            case 1:
+                break;
+            case 2:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenu;
+                break;
+            case 3:
+                game->state = GameExit;
+                break;
+        }
+    }
+}

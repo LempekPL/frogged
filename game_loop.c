@@ -8,30 +8,25 @@ void game_play_init(Game* game) {
     GameData* game_data = &game->context_data.game_data;
     game_data->player = create_player(game->main_win->rows - 2, game->main_win->cols / 2, game->config.frog);
     game_data->cars = new_cars(2);
-    game_data->lines = calloc(game->main_win->rows, sizeof(int));
+    game_data->lines = generate_default_lines(game->main_win->rows);
     switch (game_data->level) {
         case 1:
             game_data->goal.x = game->main_win->cols / 2;
             game_data->goal.y = 1;
             break;
         case 2:
-            game_data->lines[game->main_win->rows / 2] = 1;
-            // Car car = new_car(1, game->main_win->rows / 2, 200, CarEnemy, ToRight);
-            Car car = new_car(1, game->main_win->rows / 2, 200, CarEnemy, ToRight);
-            add_car(game_data->cars, &car);
+            Line line = new_line_ext(LineRoad, game->main_win->rows / 2, DirToLeft, RA(0, 100), 1000, 6000);
+            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2);
             break;
         default: break;
     }
     game_data->state = Playing;
 }
 
-void draw_game_lines(const Game* game) {
-    for (int i = 1; i < game->main_win->rows - 1; i++) {
-        for (int j = 1; j < game->main_win->cols - 1; j++) {
-            change_color(game->main_win, game->context_data.game_data.lines[i]);
-            mvwprintw(game->main_win->win, i, j, " ");
-        }
-    }
+void free_game_data(GameData* game_data) {
+    free(game_data->player);
+    free_cars(game_data->cars);
+    free_lines(game_data->lines);
 }
 
 void draw_tutorial_text(Game* game) {
@@ -61,7 +56,8 @@ void draw_tutorial_text(Game* game) {
 
 void draw_goal(const Game* game) {
     Goal goal = game->context_data.game_data.goal;
-    change_color(game->main_win, game->context_data.game_data.lines[goal.y]);
+    Line* line = ptr_at_lines(game->context_data.game_data.lines, 1);
+    change_color(game->main_win, line->type);
     mvwprintw(game->main_win->win, goal.y, goal.x, "*");
 }
 
@@ -72,9 +68,29 @@ void collision(Game* game) {
     if (goal.x == player->x && goal.y == player->y) {
         game->context_data.game_data.state = PlayingSuccess;
         game->context_data.game_data.end_select = 0;
-        free(player);
-        free_cars(game_data->cars);
-        free(game_data->lines);
+        free_game_data(game_data);
+    } else {
+        for (int i = 0; i < game_data->cars->size; i++) {
+            Car* car = ptr_at_cars(game_data->cars, i);
+            if (car->y == player->y && car->x <= player->x && car->x + 3 > player->x) {
+                game->context_data.game_data.state = PlayingKilled;
+                game->context_data.game_data.end_select = 0;
+                free_game_data(game_data);
+            }
+        }
+    }
+}
+
+void spawn_cars_randomly(Win* win, Cars* cars, Lines* lines) {
+    for (int i = 0; i < lines->size; i++) {
+        Line* line = ptr_at_lines(lines, i);
+        if (line->type == LineRoad && timer_elapsed(&line->spawn_timer, line->car_freq)) {
+            mvwprintw(win->win, 1, 1, "%d", line->car_freq);
+            line->car_freq = RA(line->min_random, line->max_random);
+            timer_start(&line->spawn_timer);
+            Car car = spawn_car_on_line(win, *line, 200, CarEnemy);
+            add_car(cars, &car);
+        }
     }
 }
 
@@ -83,14 +99,13 @@ void game_play_run(Game* game) {
     char level_name[16];
     sprintf(level_name, " Level: %d", game_data->level);
     print_top(game, level_name, 0);
-    draw_game_lines(game);
+    draw_lines(game->main_win, game_data->lines);
     draw_tutorial_text(game);
     draw_goal(game);
-    change_color(game->main_win, game->context_data.game_data.lines[game_data->player->y]);
-    draw_player(game->main_win, game_data->player);
+    draw_player(game->main_win, game_data->player, game_data->lines);
     draw_cars(game->main_win, game_data->cars);
 
-    spawn_cars_randomly();
+    spawn_cars_randomly(game->main_win, game_data->cars, game_data->lines);
 
     int key = wgetch(game->main_win->win);
     move_player(game_data->player, key, game->main_win->cols - 2, game->main_win->rows - 2);
@@ -112,6 +127,9 @@ void run_game_play(Game* game) {
             break;
         case PlayingSuccess:
             run_game_success_menu(game);
+            break;
+        case PlayingKilled:
+            run_game_killed_menu(game);
             break;
         default: break;
     }

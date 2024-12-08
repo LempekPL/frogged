@@ -13,7 +13,9 @@ Player* create_player(int row, int col, char character) {
     return player;
 }
 
-void draw_player(const Win* win, const Player* player) {
+void draw_player(const Win* win, const Player* player, const Lines* lines) {
+    Line* line = ptr_at_lines(lines, player->y);
+    change_color(win, line->type);
     mvwprintw(win->win, player->y, player->x, &player->character);
 }
 

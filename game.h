@@ -3,6 +3,7 @@
 #include "window.h"
 #include "player.h"
 #include "config.h"
+#include "game_lines.h"
 #include "car.h"
 
 typedef enum {
@@ -36,7 +37,7 @@ typedef struct {
     PlayingState state;
     Player* player;
     Goal goal;
-    int* lines;
+    Lines* lines;
     Cars* cars;
 } GameData;
 

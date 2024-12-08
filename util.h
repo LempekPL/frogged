@@ -8,7 +8,7 @@
 #define centerX(game, string) (game->main_win->cols / 2 - (int) strlen(string) / 2)
 
 int digit_amount(long long);
-void change_color(Win*, int);
+void change_color(const Win* win, LineType line_type);
 void print_top(Game*, char* string, int centered);
 
 #endif //UTIL_H

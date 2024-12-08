@@ -11,13 +11,16 @@ int digit_amount(long long n) {
     return r;
 }
 
-void change_color(Win* win, int color) {
-    switch (color) {
-        case 1: wcolor_set(win->win, ROAD_COL, NULL);
+void change_color(const Win* win, LineType line_type) {
+    switch (line_type) {
+        case LineGrass:
+            wcolor_set(win->win, GRASS_COL, NULL);
         break;
-        case 2: wcolor_set(win->win, WATER_COL, NULL);
+        case LineRoad:
+            wcolor_set(win->win, ROAD_COL, NULL);
         break;
-        default: wcolor_set(win->win, GRASS_COL, NULL);
+        case LineWater:
+            wcolor_set(win->win, WATER_COL, NULL);
         break;
     }
 }
