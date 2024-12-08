@@ -16,6 +16,7 @@ void game_play_init(Game* game) {
             break;
         case 2:
             game_data->lines[game->main_win->rows / 2] = 1;
+            // Car car = new_car(1, game->main_win->rows / 2, 200, CarEnemy, ToRight);
             Car car = new_car(1, game->main_win->rows / 2, 200, CarEnemy, ToRight);
             add_car(game_data->cars, &car);
             break;
@@ -88,6 +89,8 @@ void game_play_run(Game* game) {
     change_color(game->main_win, game->context_data.game_data.lines[game_data->player->y]);
     draw_player(game->main_win, game_data->player);
     draw_cars(game->main_win, game_data->cars);
+
+    spawn_cars_randomly();
 
     int key = wgetch(game->main_win->win);
     move_player(game_data->player, key, game->main_win->cols - 2, game->main_win->rows - 2);

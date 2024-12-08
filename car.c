@@ -29,13 +29,13 @@ int move_car(Car* car, int max) {
         switch (car->car_ride) {
             case ToLeft:
                 move = -1;
-            break;
+                break;
             case ToRight:
                 move = 1;
-            break;
+                break;
         }
         car->x += move;
-        if (car->x <= 0 || car->x+3 >= max) {
+        if (car->x < 1 || max < car->x + 4) {
             return 1;
         }
     }
