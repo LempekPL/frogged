@@ -26,6 +26,21 @@ void save_config(GameConfig* config, char* path_name) {
     fclose(config_save);
 }
 
+void border_config(FILE* config_file, GameConfig* config) {
+    char border_type[20];
+    fscanf(config_file, "%s", border_type);
+    if (strcmp(border_type, "clean") == 0) config->border_type = Clean;
+    else if (strcmp(border_type, "wrapped") == 0) config->border_type = Wrapped;
+    else config->border_type = Simple;
+}
+
+void size_config(FILE* config_file, GameConfig* config) {
+    int tmpW, tmpH;
+    fscanf(config_file, "%d %d", &tmpW, &tmpH);
+    config->width = Clamp(tmpW, 31, 1000);
+    config->height = Clamp(tmpH, 21, 1000);
+}
+
 GameConfig load_config(char* path_name) {
     GameConfig config = {Simple, 31, 21, time(NULL), 'F', 200, 1};
     FILE* config_file = fopen(path_name, "r");
@@ -38,22 +53,13 @@ GameConfig load_config(char* path_name) {
         char name[20];
         fscanf(config_file, "%s ", name);
         if (strcmp(name, "border") == 0) {
-            char border_type[20];
-            fscanf(config_file, "%s", border_type);
-            if (strcmp(border_type, "clean") == 0) config.border_type = Clean;
-            else if (strcmp(border_type, "wrapped") == 0) config.border_type = Wrapped;
-            else config.border_type = Simple;
+            border_config(config_file, &config);
         } else if (strcmp(name, "size") == 0) {
-            int tmpW, tmpH;
-            fscanf(config_file, "%d %d", &tmpW, &tmpH);
-            config.width = Clamp(tmpW, 31, 1000);
-            config.height = Clamp(tmpH, 21, 1000);
+            size_config(config_file, &config);
         } else if (strcmp(name, "seed") == 0) {
             fscanf(config_file, "%ld", &config.seed);
         } else if (strcmp(name, "frog") == 0) {
-            char tmp_frog;
-            fscanf(config_file, "%c", &tmp_frog);
-            config.frog = tmp_frog;
+            fscanf(config_file, "%c", &config.frog);
         } else if (strcmp(name, "cooldown") == 0) {
             int tmp_cooldown;
             fscanf(config_file, "%d", &tmp_cooldown);

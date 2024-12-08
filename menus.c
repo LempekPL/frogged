@@ -35,15 +35,9 @@ int handle_select_menu(int* selection_value, int key, int max) {
     return 0;
 }
 
-void run_game_main_menu(Game* game) {
-    wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
-    print_top(game, "FROGGED", 1);
-    char* select_menu[5] = {"Start Game", "Levels", "How to", "Settings", "Exit"};
-    int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
-    print_centered_list(game, game->context_data.menu_data.selected, select_menu, list_length);
-
+void handle_game_main_menu(Game* game, int length) {
     int key = wgetch(game->main_win->win);
-    if (handle_select_menu(&game->context_data.menu_data.selected, key, list_length)) {
+    if (handle_select_menu(&game->context_data.menu_data.selected, key, length)) {
         switch (game->context_data.menu_data.selected) {
             case 0:
                 game->state = GameMenuStart;
@@ -65,6 +59,15 @@ void run_game_main_menu(Game* game) {
             default: break;
         }
     }
+}
+
+void run_game_main_menu(Game* game) {
+    wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
+    print_top(game, "FROGGED", 1);
+    char* select_menu[5] = {"Start Game", "Levels", "How to", "Settings", "Exit"};
+    int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
+    print_centered_list(game, game->context_data.menu_data.selected, select_menu, list_length);
+    handle_game_main_menu(game, list_length);
 }
 
 void run_game_start_menu(Game* game) {
@@ -147,7 +150,7 @@ void run_game_settings_menu(Game* game) {
     }
 }
 
-void settings_border(Game* game) {
+int print_settings_border_info(Game* game) {
     char* select_menu[4] = {"Simple", "Clean", "Wrapped", "Return without saving"};
     int select_menu_length = sizeof(select_menu) / sizeof(select_menu[0]);
     char* message = "Selecting will save to file";
@@ -162,7 +165,10 @@ void settings_border(Game* game) {
     }
     mvwprintw(game->main_win->win, 5, game->main_win->cols / 2 - (int) strlen(val) / 2, val);
     print_centered_list(game, game->context_data.menu_data.selected, select_menu, select_menu_length);
+    return select_menu_length;
+}
 
+void handle_settings_border(Game* game, int select_menu_length) {
     int key = wgetch(game->main_win->win);
     if (handle_select_menu(&game->context_data.menu_data.selected, key, select_menu_length)) {
         switch (game->context_data.menu_data.selected) {
@@ -184,25 +190,32 @@ void settings_border(Game* game) {
     }
 }
 
+void settings_border(Game* game) {
+    int length = print_settings_border_info(game);
+    handle_settings_border(game, length);
+}
+
 void settings_size(Game* game) {
 }
 
-void settings_seed(Game* game) {
+void print_settings_seed_info(Game* game) {
     char* messages[] = {
         "Selecting won't save to file",
         "Leaving 0 will",
         "use time(NULL) as seed",
         "Click E to accept"
-    }; // , "Click TAB to cancel"
-    mvwprintw(game->main_win->win, 1, centerX(game, messages[0]), messages[0]);
-    mvwprintw(game->main_win->win, 3, centerX(game, messages[1]), messages[1]);
-    mvwprintw(game->main_win->win, 4, centerX(game, messages[2]), messages[2]);
-    mvwprintw(game->main_win->win, 5, centerX(game, messages[3]), messages[3]);
-
-    mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 - 10, "> %lld", game->config.seed);
-    mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 + 10, "<");
+    };
+    print_main(game, 1, centerX(game, messages[0]), messages[0]);
+    print_main(game, 3, centerX(game, messages[1]), messages[1]);
+    print_main(game, 4, centerX(game, messages[2]), messages[2]);
+    print_main(game, 5, centerX(game, messages[3]), messages[3]);
+    print_main(game, 10, game->main_win->cols / 2 - 10, "> %lld", game->config.seed);
+    print_main(game, 10, game->main_win->cols / 2 + 10, "<");
     wmove(game->main_win->win, 10, game->main_win->cols / 2 + digit_amount(game->config.seed) - 8);
     curs_set(1);
+}
+
+void handle_settings_seed(Game* game) {
     int key = wgetch(game->main_win->win);
     if (key == 'e' || key == 'q' || key == ' ') {
         curs_set(0);
@@ -221,6 +234,11 @@ void settings_seed(Game* game) {
     } else if (key == KEY_BACKSPACE && game->config.seed >= 0) {
         game->config.seed /= 10;
     }
+}
+
+void settings_seed(Game* game) {
+    print_settings_seed_info(game);
+    handle_settings_seed(game);
 }
 
 void settings_frog(Game* game) {
@@ -244,24 +262,23 @@ void settings_frog(Game* game) {
 
 void run_game_settings_edit(Game* game) {
     switch (game->context_data.menu_data.setting) {
-        case 1:
-            settings_border(game);
+        case 1: settings_border(game);
             break;
-        case 2:
-            settings_size(game);
+        case 2: settings_size(game);
             break;
-        case 3:
-            settings_seed(game);
+        case 3: settings_seed(game);
             break;
-        case 4:
-            settings_frog(game);
+        case 4: settings_frog(game);
+            break;
+        default:
+            game->context_data.menu_data.selected = 0;
+            game->state = GameSettings;
             break;
     }
 }
 
-void run_game_levels_menu(Game* game) {
+void render_levels_menu(const Game* game, const int* selected) {
     int half_width = game->main_win->cols / 2;
-    int* selected = &game->context_data.menu_data.selected;
     char* level_string = "Levels";
     mvwprintw(game->main_win->win, 3, centerX(game, level_string), level_string);
 
@@ -288,8 +305,9 @@ void run_game_levels_menu(Game* game) {
             }
         }
     }
-    wrefresh(game->main_win->win);
+}
 
+void handle_levels_menu(Game* game, int* selected) {
     int key = wgetch(game->main_win->win);
     switch (key) {
         case 'w':
@@ -325,6 +343,37 @@ void run_game_levels_menu(Game* game) {
     *selected = Clamp(*selected, 0, MAX_LEVELS);
 }
 
+void run_game_levels_menu(Game* game) {
+    int* selected = &game->context_data.menu_data.selected;
+    render_levels_menu(game, selected);
+    wrefresh(game->main_win->win);
+    handle_levels_menu(game, selected);
+}
+
+void handle_success_menu(Game* game, int list_length) {
+    int key = wgetch(game->main_win->win);
+    if (handle_select_menu(&game->context_data.game_data.end_select, key, list_length)) {
+        switch (game->context_data.game_data.end_select) {
+            case 0:
+                game->state = GamePlaying;
+                game->context_data.game_data.level += 1;
+                game->context_data.game_data.state = PlayingInitLevels;
+                break;
+            case 1:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenuLevels;
+                break;
+            case 2:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenu;
+                break;
+            case 3:
+                game->state = GameExit;
+                break;
+        }
+    }
+}
+
 void run_game_success_menu(Game* game) {
     char level_name[26];
     sprintf(level_name, " Level: %d Completed", game->context_data.game_data.level);
@@ -336,12 +385,15 @@ void run_game_success_menu(Game* game) {
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
     print_centered_list(game, game->context_data.game_data.end_select, select_menu, list_length);
 
+    handle_success_menu(game, list_length);
+}
+
+void handle_killed_menu(Game* game, int list_length) {
     int key = wgetch(game->main_win->win);
     if (handle_select_menu(&game->context_data.game_data.end_select, key, list_length)) {
         switch (game->context_data.game_data.end_select) {
             case 0:
                 game->state = GamePlaying;
-                game->context_data.game_data.level += 1;
                 game->context_data.game_data.state = PlayingInitLevels;
                 break;
             case 1:
@@ -370,24 +422,5 @@ void run_game_killed_menu(Game* game) {
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
     print_centered_list(game, game->context_data.game_data.end_select, select_menu, list_length);
 
-    int key = wgetch(game->main_win->win);
-    if (handle_select_menu(&game->context_data.game_data.end_select, key, list_length)) {
-        switch (game->context_data.game_data.end_select) {
-            case 0:
-                game->state = GamePlaying;
-                game->context_data.game_data.state = PlayingInitLevels;
-                break;
-            case 1:
-                game->context_data.menu_data.selected = 0;
-                game->state = GameMenuLevels;
-                break;
-            case 2:
-                game->context_data.menu_data.selected = 0;
-                game->state = GameMenu;
-                break;
-            case 3:
-                game->state = GameExit;
-                break;
-        }
-    }
+    handle_killed_menu(game, list_length);
 }

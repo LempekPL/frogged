@@ -7,6 +7,7 @@
 #define Clamp(value, min, max) ( value < min ? min : value > max ? max : value )
 #define centerX(game, string) (game->main_win->cols / 2 - (int) strlen(string) / 2)
 #define rightX(game, string) (game->main_win->cols - 1 - (int) strlen(string))
+#define print_main(game, y, x, ...) (mvwprintw(game->main_win->win, y, x, __VA_ARGS__))
 
 int digit_amount(long long);
 void change_color(const Win* win, LineType line_type);

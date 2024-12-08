@@ -50,7 +50,7 @@ typedef struct LinesStruct {
 } Lines;
 
 Line new_line(LineType type, int y);
-Line new_line_car(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car);
+Line new_line_car(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car, float stopper);
 Lines* generate_default_lines(int height);
 Lines* new_lines(int capacity);
 void add_line(Lines* lines, const Line* line);

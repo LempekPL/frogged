@@ -14,7 +14,7 @@ Lines* generate_random_lines(int height) {
         if (RA(0,1) == 1) {
             line_dir = DirToRight;
         }
-        Line line = new_line_car(LineRoad, i, line_dir, RA(100, 500), RA(0, 100), 1000, 6000);
+        Line line = new_line_car(LineRoad, i, line_dir, RA(100, 500), RA(0, 100), 1000, 6000, 0);
         add_line(new_lines_vec, &line);
     }
     return new_lines_vec;

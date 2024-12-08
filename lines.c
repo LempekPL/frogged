@@ -42,7 +42,7 @@ Line new_line(LineType type, int y) {
     return line;
 }
 
-Line new_line_car(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car) {
+Line new_line_car(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car, float stopper) {
     Line line = {type, y};
     Timer timer;
     timer_start(&timer);
@@ -52,7 +52,7 @@ Line new_line_car(LineType type, int y, LineDirection direction, int speed_limit
     line.line_data.car.min_next_car = min_next_car;
     line.line_data.car.max_next_car = max_next_car;
     line.line_data.car.line_speed_limit = speed_limit;
-    line.line_data.car.stopper_chance = 0;
+    line.line_data.car.stopper_chance = stopper;
     return line;
 }
 

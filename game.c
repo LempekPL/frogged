@@ -6,10 +6,10 @@
 void redraw_game_border(const Game* game) {
     wclear(game->bottom_win->win);
     wrefresh(game->bottom_win->win);
+    mvwin(game->main_win->win, 2, 0);
+    mvwin(game->bottom_win->win, game->main_win->rows + 1, 0);
     switch (game->config.border_type) {
         case Simple:
-            mvwin(game->main_win->win, 2, 0);
-            mvwin(game->bottom_win->win, game->main_win->rows + 1, 0);
             wborder(game->top_win->win, '|', '|', '-', '-', '+', '+', '+', '+');
             wborder(game->main_win->win, '|', '|', '-', '-', '+', '+', '+', '+');
             wborder(game->bottom_win->win, '|', '|', '-', '-', '+', '+', '+', '+');
@@ -22,8 +22,6 @@ void redraw_game_border(const Game* game) {
             box(game->bottom_win->win, 0, 0);
             break;
         case Wrapped:
-            mvwin(game->main_win->win, 2, 0);
-            mvwin(game->bottom_win->win, game->main_win->rows + 1, 0);
             wborder(game->top_win->win, 0, 0, '=', '=', '[', ']', '[', ']');
             wborder(game->main_win->win, 0, 0, '=', '=', '[', ']', '[', ']');
             wborder(game->bottom_win->win, 0, 0, '=', '=', '[', ']', '[', ']');
@@ -40,7 +38,6 @@ Game* create_game() {
     game->state = GameMenu;
     game->context_data.menu_data.selected = 0;
     game->config = load_config("config.txt");
-
     srand(game->config.seed);
     game->top_win = create_window(3, game->config.width, 0, 0);
     game->main_win = create_window(game->config.height, game->config.width, 2, 0);
