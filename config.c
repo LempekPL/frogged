@@ -1,5 +1,6 @@
 #include "config.h"
 #include "util.h"
+#include "levels.h"
 #include <string.h>
 #include <time.h>
 
@@ -26,7 +27,7 @@ void save_config(GameConfig* config, char* path_name) {
 }
 
 GameConfig load_config(char* path_name) {
-    GameConfig config = {Simple, 31, 21, time(NULL), 'F', 200};
+    GameConfig config = {Simple, 31, 21, time(NULL), 'F', 200, 1};
     FILE* config_file = fopen(path_name, "r");
     if (config_file == NULL) {
         fclose(config_file);
@@ -60,7 +61,7 @@ GameConfig load_config(char* path_name) {
         } else if (strcmp(name, "completed") == 0) {
             int tmp_completed;
             fscanf(config_file, "%d", &tmp_completed);
-            config.completed = Clamp(tmp_completed, 1, 20);
+            config.completed = Clamp(tmp_completed, 1, MAX_LEVELS);
         }
     }
     fclose(config_file);

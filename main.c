@@ -3,11 +3,6 @@
 #include "game_loop.h"
 #include "menus.h"
 
-// void draw_pts(const Game* g) {
-//     mvwprintw(g->top_win->win, 1, 1, "PTS: %d | MAX PTS: %d", g->player->pts, g->player->max_pts);
-//     wrefresh(g->top_win->win);
-// }
-
 // void calc_pts(Game* game) {
 //     if (game->player->curr_pts > game->player->pts) {
 //         game->player->pts = game->player->curr_pts;
@@ -38,7 +33,7 @@ int main() {
                 run_game_start_menu(game);
                 break;
             case GameMenuLevels:
-                // run_game_levels_menu(game);
+                run_game_levels_menu(game);
                 break;
             case GameHelp:
                 run_game_help(game);

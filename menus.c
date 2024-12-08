@@ -1,6 +1,7 @@
 #include "menus.h"
 #include "config.h"
 #include "util.h"
+#include "levels.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
@@ -47,6 +48,10 @@ void run_game_main_menu(Game* game) {
             case 0:
                 game->state = GameMenuStart;
                 break;
+            case 1:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenuLevels;
+                break;
             case 2:
                 game->state = GameHelp;
                 break;
@@ -80,7 +85,7 @@ void run_game_start_menu(Game* game) {
                 break;
             case 1:
                 game->state = GamePlaying;
-                game->context_data.game_data.level = game->config.completed;
+                game->context_data.game_data.level = game->config.completed + 1;
                 game->context_data.game_data.state = PlayingInitLevels;
                 break;
             case 2:
@@ -254,6 +259,72 @@ void run_game_settings_edit(Game* game) {
     }
 }
 
+void run_game_levels_menu(Game* game) {
+    int half_width = game->main_win->cols / 2;
+    int* selected = &game->context_data.menu_data.selected;
+    char* level_string = "Levels";
+    mvwprintw(game->main_win->win, 3, centerX(game, level_string), level_string);
+
+    if (*selected == 0) {
+        char* back = "> Back <";
+        mvwprintw(game->main_win->win, 5, centerX(game, back), back);
+    } else {
+        char* back = "  Back  ";
+        mvwprintw(game->main_win->win, 5, centerX(game, back), back);
+    }
+
+    for (int i = 0; i < MAX_LEVELS / 3 + 1; i++) {
+        for (int j = 0; j < 3; j++) {
+            int level_number = i * 3 + j + 1;
+            if (level_number > MAX_LEVELS) break;
+            if (game->config.completed < level_number - 1 && *selected == level_number) {
+                mvwprintw(game->main_win->win, i + 6, j * 6 + half_width - 9, ">[%02d]<", level_number);
+            } else if (game->config.completed < level_number - 1) {
+                mvwprintw(game->main_win->win, i + 6, j * 6 + half_width - 9, " [%02d] ", level_number);
+            } else if (*selected == level_number) {
+                mvwprintw(game->main_win->win, i + 6, j * 6 + half_width - 9, "> %02d <", level_number);
+            } else {
+                mvwprintw(game->main_win->win, i + 6, j * 6 + half_width - 9, "  %02d  ", level_number);
+            }
+        }
+    }
+    wrefresh(game->main_win->win);
+
+    int key = wgetch(game->main_win->win);
+    switch (key) {
+        case 'w':
+        case KEY_UP:
+            if (*selected < 3) *selected = 0;
+            else *selected -= 3;
+            break;
+        case 's':
+        case KEY_DOWN:
+            if (*selected == 0) *selected = 2;
+            else *selected += 3;
+            break;
+        case 'a':
+        case KEY_LEFT:
+            *selected -= 1;
+            break;
+        case 'd':
+        case KEY_RIGHT:
+            *selected += 1;
+            break;
+        case 'e':
+        case ' ':
+            if (*selected == 0) {
+                game->context_data.menu_data.selected = 1;
+                game->state = GameMenu;
+            } else if (*selected - 1 <= game->config.completed) {
+                game->state = GamePlaying;
+                game->context_data.game_data.level = *selected;
+                game->context_data.game_data.state = PlayingInitLevels;
+            }
+            break;
+    }
+    *selected = Clamp(*selected, 0, MAX_LEVELS);
+}
+
 void run_game_success_menu(Game* game) {
     char level_name[26];
     sprintf(level_name, " Level: %d Completed", game->context_data.game_data.level);
@@ -274,6 +345,8 @@ void run_game_success_menu(Game* game) {
                 game->context_data.game_data.state = PlayingInitLevels;
                 break;
             case 1:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenuLevels;
                 break;
             case 2:
                 game->context_data.menu_data.selected = 0;
@@ -305,6 +378,8 @@ void run_game_killed_menu(Game* game) {
                 game->context_data.game_data.state = PlayingInitLevels;
                 break;
             case 1:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenuLevels;
                 break;
             case 2:
                 game->context_data.menu_data.selected = 0;
