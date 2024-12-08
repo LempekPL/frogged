@@ -92,6 +92,10 @@ void game_levels_play(Game* game) {
     PlayerCollision collision_type = collision_player(game_data);
     switch (collision_type) {
         case PlayerTouchGoal:
+            if (game->config.completed < game->context_data.game_data.level) {
+                game->config.completed = game->context_data.game_data.level;
+                save_config(&game->config, "config.txt");
+            }
             game_data->state = PlayingSuccess;
             game_data->end_select = 0;
             free_game_data(game_data);
