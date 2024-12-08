@@ -5,32 +5,32 @@
 #include <stdlib.h>
 #include <time.h>
 
-void print_centered_list(Game* game, char** string_list, int list_length) {
+void print_centered_list(Game* game, int selected, char** string_list, int list_length) {
     for (int i = 0; i < list_length; i++) {
-        int offset = i == game->context_data.menu_data.selected ? -2 : 0;
+        int offset = i == selected ? -2 : 0;
         int centeredY = game->main_win->rows / 2 - list_length / 2 + i;
         mvwprintw(game->main_win->win, centeredY, centerX(game, string_list[i]) + offset,
-                  i == game->context_data.menu_data.selected ? "> %s <" : "%s", string_list[i]);
+                  i == selected ? "> %s <" : "%s", string_list[i]);
     }
     wrefresh(game->main_win->win);
 }
 
-int handle_select_menu(Game* game, int key, int max) {
+int handle_select_menu(int* selection_value, int key, int max) {
     switch (key) {
         case 'w':
         case KEY_UP:
-            game->context_data.menu_data.selected -= 1;
+            *selection_value -= 1;
             break;
         case 's':
         case KEY_DOWN:
-            game->context_data.menu_data.selected += 1;
+            *selection_value += 1;
             break;
         case 'e':
         case ' ':
             return 1;
         default: break;
     }
-    game->context_data.menu_data.selected = Clamp(game->context_data.menu_data.selected, 0, max - 1);
+    *selection_value = Clamp(*selection_value, 0, max - 1);
     return 0;
 }
 
@@ -39,10 +39,10 @@ void run_game_main_menu(Game* game) {
     print_top(game, "FROGGED", 1);
     char* select_menu[5] = {"Start Game", "Levels", "How to", "Settings", "Exit"};
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
-    print_centered_list(game, select_menu, list_length);
+    print_centered_list(game, game->context_data.menu_data.selected, select_menu, list_length);
 
     int key = wgetch(game->main_win->win);
-    if (handle_select_menu(game, key, list_length)) {
+    if (handle_select_menu(&game->context_data.menu_data.selected, key, list_length)) {
         switch (game->context_data.menu_data.selected) {
             case 0:
                 game->state = GamePlaying;
@@ -93,10 +93,10 @@ void run_game_help(Game* game) {
 void run_game_settings_menu(Game* game) {
     char* select_menu[5] = {"Back", "Border", "Size", "Seed", "Frog"};
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
-    print_centered_list(game, select_menu, list_length);
+    print_centered_list(game, game->context_data.menu_data.selected, select_menu, list_length);
 
     int key = wgetch(game->main_win->win);
-    if (handle_select_menu(game, key, list_length)) {
+    if (handle_select_menu(&game->context_data.menu_data.selected, key, list_length)) {
         switch (game->context_data.menu_data.selected) {
             case 0:
                 game->context_data.menu_data.selected = 3;
@@ -104,6 +104,7 @@ void run_game_settings_menu(Game* game) {
                 break;
             default:
                 game->context_data.menu_data.setting = game->context_data.menu_data.selected;
+                game->context_data.menu_data.selected = 0;
                 game->state = GameSettingsEdit;
                 break;
         }
@@ -124,10 +125,10 @@ void settings_border(Game* game) {
         default: break;
     }
     mvwprintw(game->main_win->win, 5, game->main_win->cols / 2 - (int) strlen(val) / 2, val);
-    print_centered_list(game, select_menu, select_menu_length);
+    print_centered_list(game, game->context_data.menu_data.selected, select_menu, select_menu_length);
 
     int key = wgetch(game->main_win->win);
-    if (handle_select_menu(game, key, select_menu_length)) {
+    if (handle_select_menu(&game->context_data.menu_data.selected, key, select_menu_length)) {
         switch (game->context_data.menu_data.selected) {
             case 0:
                 game->config.border_type = Simple;
@@ -151,11 +152,16 @@ void settings_size(Game* game) {
 }
 
 void settings_seed(Game* game) {
-    char* messages[] = {"Selecting won't save to file", "Leaving 0 will", "use time(NULL) as seed", "Click E to accept"};
+    char* messages[] = {
+        "Selecting won't save to file",
+        "Leaving 0 will",
+        "use time(NULL) as seed",
+        "Click E to accept"
+    }; // , "Click TAB to cancel"
     mvwprintw(game->main_win->win, 1, centerX(game, messages[0]), messages[0]);
-    mvwprintw(game->main_win->win, 4, centerX(game, messages[1]), messages[1]);
-    mvwprintw(game->main_win->win, 5, centerX(game, messages[2]), messages[2]);
-    mvwprintw(game->main_win->win, 7, centerX(game, messages[3]), messages[3]);
+    mvwprintw(game->main_win->win, 3, centerX(game, messages[1]), messages[1]);
+    mvwprintw(game->main_win->win, 4, centerX(game, messages[2]), messages[2]);
+    mvwprintw(game->main_win->win, 5, centerX(game, messages[3]), messages[3]);
 
     mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 - 10, "> %lld", game->config.seed);
     mvwprintw(game->main_win->win, 10, game->main_win->cols / 2 + 10, "<");
@@ -167,6 +173,11 @@ void settings_seed(Game* game) {
         if (game->config.seed == 0) game->config.seed = time(NULL);
         game->context_data.menu_data.selected = 0;
         game->state = GameSettings;
+        // } else if (key == '\t') {
+        //     curs_set(0);
+        //     if (game->config.seed == 0) game->config.seed = time(NULL);
+        //     game->context_data.menu_data.selected = 0;
+        //     game->state = GameSettings;
     } else if (isdigit(key) && game->config.seed <= 9999999999999999) {
         game->config.seed *= 10;
         game->config.seed += key - '0';
@@ -180,14 +191,14 @@ void settings_frog(Game* game) {
     mvwprintw(game->main_win->win, 2, centerX(game, messages[0]), messages[0]);
     mvwprintw(game->main_win->win, 3, centerX(game, messages[1]), messages[1]);
     char* current = "Current:";
-    mvwprintw(game->main_win->win, 6, centerX(game, current)-2, "%s %c", current, game->config.frog);
+    mvwprintw(game->main_win->win, 6, centerX(game, current) - 2, "%s %c", current, game->config.frog);
 
     int key = wgetch(game->main_win->win);
     if (key == '\t') {
         game->context_data.menu_data.selected = 0;
         game->state = GameSettings;
     } else if (isalnum(key)) {
-        game->config.frog = (char)key;
+        game->config.frog = (char) key;
         save_config(&game->config, "config.txt");
         game->context_data.menu_data.selected = 0;
         game->state = GameSettings;
@@ -208,5 +219,37 @@ void run_game_settings_edit(Game* game) {
         case 4:
             settings_frog(game);
             break;
+    }
+}
+
+void run_game_success_menu(Game* game) {
+    char level_name[24];
+    sprintf(level_name, " Level: %d Success", game->context_data.game_data.level);
+    print_top(game, level_name, 0);
+    wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
+    char* message = "YOU DID IT!!!";
+    mvwprintw(game->main_win->win, 4, centerX(game, message), message);
+    char* select_menu[4] = {"Next Level", "Levels", "Main Menu", "Exit"};
+    int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
+    print_centered_list(game, game->context_data.game_data.end_select, select_menu, list_length);
+
+    int key = wgetch(game->main_win->win);
+    if (handle_select_menu(&game->context_data.game_data.end_select, key, list_length)) {
+        switch (game->context_data.game_data.end_select) {
+            case 0:
+                game->state = GamePlaying;
+                game->context_data.game_data.level += 1;
+                game->context_data.game_data.state = PlayingInit;
+                break;
+            case 1:
+                break;
+            case 2:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenu;
+                break;
+            case 3:
+                game->state = GameExit;
+                break;
+        }
     }
 }

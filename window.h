@@ -4,11 +4,13 @@
 #define DEFAULT_COL 0
 #define DEFAULT_SWP_COL 1
 #define PLAYER_COL 2
-#define STREET_COL 3
+#define ROAD_COL 3
 #define CAR_COL 4
 #define GRASS_COL 5
 #define WATER_COL 6
 #define GRASS_BLACK_COL 7
+#define ROAD_RED_COL 8
+#define ROAD_GREEN_COL 9
 
 #if defined(_WIN32) || defined(_WIN64) // Windows
 #include <ncursesw/ncurses.h>

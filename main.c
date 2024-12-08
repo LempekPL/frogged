@@ -17,6 +17,17 @@
 //     }
 // }
 
+///////////////////////////////////////////////////
+/// TODO LIST:
+/// - cars
+/// - cars but different speeds
+/// - config size
+/// - trees/logs
+/// - cars but friendly
+/// - ranking (infinite)
+/// - stork
+/// - timer
+
 int main() {
     init_ncurses();
     Game* game = create_game();

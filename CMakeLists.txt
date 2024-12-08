@@ -25,6 +25,10 @@ add_executable(frogged main.c
         menus.c
         menus.h
         game_loop.c
-        game_loop.h)
+        game_loop.h
+        car.c
+        car.h
+        timer.c
+        timer.h)
 
 target_link_libraries(frogged ncursesw)

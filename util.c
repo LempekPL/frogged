@@ -13,7 +13,7 @@ int digit_amount(long long n) {
 
 void change_color(Win* win, int color) {
     switch (color) {
-        case 1: wcolor_set(win->win, STREET_COL, NULL);
+        case 1: wcolor_set(win->win, ROAD_COL, NULL);
         break;
         case 2: wcolor_set(win->win, WATER_COL, NULL);
         break;

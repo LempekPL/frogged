@@ -3,6 +3,7 @@
 #include "window.h"
 #include "player.h"
 #include "config.h"
+#include "car.h"
 
 typedef enum {
     GameExit,
@@ -16,7 +17,6 @@ typedef enum {
 typedef struct {
     int selected;
     int setting;
-    char text_select[10];
 } MenuData;
 
 typedef enum {
@@ -31,11 +31,13 @@ typedef struct {
 } Goal;
 
 typedef struct {
+    int end_select;
     int level;
     PlayingState state;
     Player* player;
     Goal goal;
     int* lines;
+    Cars* cars;
 } GameData;
 
 typedef union {
