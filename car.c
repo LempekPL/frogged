@@ -36,7 +36,7 @@ int move_car(const Win* win, const Player* player, Car* car, int max) {
         }
         int ch = mvwinch(win->win, car->y, car->x+move) & A_CHARTEXT;
         int chAfter = mvwinch(win->win, car->y, car->x+move*2) & A_CHARTEXT;
-        if (ch != 'o' && chAfter != '=') {
+        if (!(ch == 'o' && chAfter == '=')) {
             if (car->car_type != CarStopping || ch != player->character) {
                 car->x += move;
             }
