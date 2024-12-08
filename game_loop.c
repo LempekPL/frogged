@@ -12,26 +12,6 @@ void free_game_data(GameData* game_data) {
     free_lines(game_data->lines);
 }
 
-void collision(Game* game) {
-    GameData* game_data = &game->context_data.game_data;
-    Goal goal = game_data->goal;
-    Player* player = game_data->player;
-    if (goal.x == player->x && goal.y == player->y) {
-        game->context_data.game_data.state = PlayingSuccess;
-        game->context_data.game_data.end_select = 0;
-        free_game_data(game_data);
-    } else {
-        for (int i = 0; i < game_data->cars->size; i++) {
-            Car* car = ptr_at_cars(game_data->cars, i);
-            if (car->y == player->y && car->x <= player->x && car->x + 3 > player->x) {
-                game->context_data.game_data.state = PlayingKilled;
-                game->context_data.game_data.end_select = 0;
-                free_game_data(game_data);
-            }
-        }
-    }
-}
-
 void spawn_cars_randomly(const Win* win, Cars* cars, const Lines* lines) {
     for (int i = 0; i < lines->size; i++) {
         Line* line = ptr_at_lines(lines, i);

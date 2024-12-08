@@ -3,7 +3,7 @@
 #include "game.h"
 
 void run_game_play(Game*);
-void collision(Game* game);
+void free_game_data(GameData*);
 void spawn_cars_randomly(const Win* win, Cars* cars, const Lines* lines);
 
 #endif //GAME_LOOP_H

@@ -1,5 +1,7 @@
 #include "player.h"
 #include <stdlib.h>
+
+#include "game_loop.h"
 #include "util.h"
 
 Player* create_player(const int row, const int col, const char character) {
@@ -11,6 +13,21 @@ Player* create_player(const int row, const int col, const char character) {
     player->max_pts = 0;
     player->pts = 0;
     return player;
+}
+
+PlayerCollision collision_player(const GameData* game_data) {
+    Goal goal = game_data->goal;
+    Player* player = game_data->player;
+    if (goal.x == player->x && goal.y == player->y) {
+        return PlayerTouchGoal;
+    }
+    for (int i = 0; i < game_data->cars->size; i++) {
+        Car* car = ptr_at_cars(game_data->cars, i);
+        if (car->y == player->y && car->x <= player->x && car->x + 3 > player->x) {
+            return PlayerTouchDeath;
+        }
+    }
+    return PlayerTouchNothing;
 }
 
 void draw_player(const Win* win, const Player* player, const Lines* lines) {

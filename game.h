@@ -1,10 +1,10 @@
 #ifndef GAME_H
 #define GAME_H
 #include "window.h"
-#include "player.h"
 #include "config.h"
 #include "lines.h"
 #include "car.h"
+#include "player.h"
 
 typedef enum {
     GameExit,
@@ -35,14 +35,14 @@ typedef struct {
     int x, y;
 } Goal;
 
-typedef struct {
+typedef struct GameDataS {
     int end_select;
     int level;
     PlayingState state;
-    Player* player;
+    struct PlayerS* player;
     Goal goal;
     Lines* lines;
-    Cars* cars;
+    struct CarsS* cars;
 } GameData;
 
 typedef union {
