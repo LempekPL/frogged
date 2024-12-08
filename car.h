@@ -22,6 +22,7 @@ typedef struct {
     float random_speed_change_chance;
     CarType car_type;
     CarDirection car_ride;
+    int has_player;
     Timer timer;
 } Car;
 
@@ -40,6 +41,6 @@ void remove_at_cars(Cars* cars, int index);
 void clear_cars(Cars* cars);
 void free_cars(Cars* cars);
 void draw_cars(const Win* win, const Cars* cars);
-void move_cars(const Win* win, const struct PlayerStruct* player, Cars* cars, int max);
+void move_cars(const Win* win, struct PlayerStruct* player, Cars* cars, int max);
 
 #endif //CAR_H

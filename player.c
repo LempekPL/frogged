@@ -15,6 +15,7 @@ Player* create_player(const int row, const int col, const char character, const 
     player->curr_pts = 0;
     player->max_pts = 0;
     player->pts = 0;
+    player->is_riding = 0;
     return player;
 }
 
@@ -36,7 +37,7 @@ PlayerCollision collision_player(const GameData* game_data) {
     }
     for (int i = 0; i < game_data->cars->size; i++) {
         Car* car = ptr_at_cars(game_data->cars, i);
-        if (car->y == player->y && car->x <= player->x && car->x + 3 > player->x) {
+        if (car->y == player->y && car->x <= player->x && car->x + 3 > player->x && car->car_type != CarFriendly) {
             return PlayerTouchDeath;
         }
     }
@@ -73,7 +74,7 @@ void move_player(Player* player, const int key, const int maxX, const int maxY) 
         case 'd':
         case KEY_RIGHT:
             dx = 1;
-            break;
+        break;
         default: return;
     }
     if (timer_elapsed(&player->timer, player->cooldown)) {

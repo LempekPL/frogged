@@ -12,7 +12,7 @@ void draw_car(const Win* win, const Car car) {
             wcolor_set(win->win, ROAD_YELLOW_COL, NULL);
             break;
         case CarFriendly:
-            wcolor_set(win->win, ROAD_RED_COL, NULL);
+            wcolor_set(win->win, ROAD_GREEN_COL, NULL);
             break;
     }
     mvwprintw(win->win, car.y, car.x, "o=o");
@@ -44,7 +44,7 @@ int is_next_empty(const Win* win, const struct PlayerStruct* player, Car* car) {
     return 0;
 }
 
-int move_car(const Win* win, const struct PlayerStruct* player, Car* car, int max) {
+int move_car(const Win* win, struct PlayerStruct* player, Car* car, int max) {
     if (timer_elapsed(&car->timer, car->speed)) {
         float chance = (float) rand() / (float) RAND_MAX;
         if (chance <= car->random_speed_change_chance) {
@@ -59,6 +59,12 @@ int move_car(const Win* win, const struct PlayerStruct* player, Car* car, int ma
                 move = 1;
                 break;
         }
+        if (car->car_type == CarFriendly && !car->has_player && car->x == 2) {
+            move = 0;
+        } else if (car->car_type == CarFriendly && car->has_player) {
+            player->x = car->x+2;
+            player->y = car->y;
+        }
         if (is_next_empty(win, player, car)) {
             car->x += move;
         }
@@ -70,7 +76,7 @@ int move_car(const Win* win, const struct PlayerStruct* player, Car* car, int ma
     return 0;
 }
 
-void move_cars(const Win* win, const struct PlayerStruct* player, Cars* cars, int max) {
+void move_cars(const Win* win, struct PlayerStruct* player, Cars* cars, int max) {
     for (int i = 0; i < cars->size; i++) {
         int outside = move_car(win, player, &cars->cars[i], max);
         if (outside) {
@@ -82,7 +88,7 @@ void move_cars(const Win* win, const struct PlayerStruct* player, Cars* cars, in
 Car new_car(int x, int y, int move_per_ms, float speed_change_chance, CarType car_type, CarDirection car_ride) {
     Timer timer;
     timer_start(&timer);
-    Car car = {x, y, move_per_ms, speed_change_chance, car_type, car_ride, timer};
+    Car car = {x, y, move_per_ms, speed_change_chance, car_type, car_ride, 0, timer};
     return car;
 }
 
@@ -108,9 +114,12 @@ void spawn_car_on_line(const Win* win, Cars* cars, const Line* line) {
     Timer timer;
     timer_start(&timer);
     const LineCarData* line_data = &line->line_data.car;
-    Car car = {1, line->y, line_data->line_speed_limit, speed_change_chance, CarEnemy, line_data->cars_direction, timer};
+    Car car = {1, line->y, line_data->line_speed_limit, speed_change_chance, CarEnemy, line_data->cars_direction, 0, timer};
     if (line_data->cars_direction == ToLeft) {
         car.x = win->cols - 4;
+    }
+    if (line_data->friendly_lane) {
+        car.car_type = CarFriendly;
     }
     float chance = (float) rand() / (float) RAND_MAX;
     if (chance <= line_data->stopper_chance) {

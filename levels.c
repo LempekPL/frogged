@@ -160,12 +160,17 @@ void level8(Game* game) {
 
 void level9(Game* game) {
     GameData* game_data = &game->context_data.game_data;
-    Line line = new_line_car(LineRoad, game->main_win->rows / 2, ToLeft, 200, 100, 1000, 6000, 1);
+    Line line = new_line_car(LineRoad, game->main_win->rows / 2, ToRight, 200, 100, 1000, 6000, -1);
+    replace_self_lines(game_data->lines, &line);
 }
 
 void level10(Game* game) {
     GameData* game_data = &game->context_data.game_data;
-    Line line = new_line_car(LineRoad, game->main_win->rows / 2, ToLeft, 200, 100, 1000, 6000, 1);
+    Line line = new_line_car(LineRoad, game->main_win->rows / 2, ToLeft, 200, 100, 1000, 6000, 0.5);
+    for (int i = -8; i <= 8; i++) {
+        line.y = game->main_win->rows / 2 - i;
+        replace_self_lines(game_data->lines, &line);
+    }
 }
 
 void game_levels_init(Game* game) {
@@ -190,9 +195,9 @@ void game_levels_init(Game* game) {
             break;
         case 8: level8(game);
             break;
-        case 9:
+        case 9: level9(game);
             break;
-        case 10:
+        case 10: level10(game);
             break;
         default: break;
     }
@@ -203,8 +208,8 @@ void game_levels_draw(const Game* game, const GameData* game_data) {
     draw_lines(game->main_win, game_data->lines);
     draw_tutorial_text(game);
     draw_goal(game);
-    draw_player(game->main_win, game_data->player, game_data->lines);
     draw_cars(game->main_win, game_data->cars);
+    draw_player(game->main_win, game_data->player, game_data->lines);
 }
 
 void game_levels_handle_collision(Game* game, GameData* game_data) {
@@ -228,6 +233,33 @@ void game_levels_handle_collision(Game* game, GameData* game_data) {
     }
 }
 
+void handle_player_riding(Game* game, GameData* game_data, int key) {
+    Cars* cars = game_data->cars;
+    Player* player = game_data->player;
+    if (key == 'e' || key == ' ') {
+        if (game_data->player->is_riding) {
+            for (int i = 0; i < game_data->cars->size; i++) {
+                if (cars->cars[i].has_player) {
+                    cars->cars[i].has_player = 0;
+                    player->is_riding = 0;
+                    player->x = cars->cars[i].x + 1;
+                    player->y = cars->cars[i].y - 1;
+                }
+            }
+        } else {
+            int front_char = mvwinch(game->main_win->win, player->y-1, player->x) & A_CHARTEXT;
+            if (front_char == '=') {
+                for (int i = 0; i < cars->size; i++) {
+                    if (player->x - 1 == cars->cars[i].x && player->y - 1 == cars->cars[i].y) {
+                        game_data->cars->cars[i].has_player = 1;
+                        game_data->player->is_riding = 1;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void game_levels_play(Game* game) {
     GameData* game_data = &game->context_data.game_data;
     char level_name[16];
@@ -239,6 +271,7 @@ void game_levels_play(Game* game) {
     move_player(game_data->player, key, game->main_win->cols - 2, game->main_win->rows - 2);
     move_cars(game->main_win, game_data->player, game_data->cars, game->main_win->cols);
     game_levels_handle_collision(game, game_data);
+    handle_player_riding(game, game_data, key);
     if (key == 'q') {
         game->state = GameMenu;
         game->context_data.menu_data.selected = 0;

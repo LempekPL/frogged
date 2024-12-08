@@ -130,7 +130,7 @@ void run_game_help(Game* game) {
 }
 
 void run_game_settings_menu(Game* game) {
-    char* select_menu[5] = {"Back", "Border", "Size", "Seed", "Frog"};
+    char* select_menu[5] = {"Back", "Border", "Seed", "Frog", "Cooldown"}; // "Size",
     int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
     print_centered_list(game, game->context_data.menu_data.selected, select_menu, list_length);
 
@@ -223,11 +223,6 @@ void handle_settings_seed(Game* game) {
         game->context_data.menu_data.selected = 0;
         game->state = GameSettings;
         srand(game->config.seed);
-        // } else if (key == '\t') {
-        //     curs_set(0);
-        //     if (game->config.seed == 0) game->config.seed = time(NULL);
-        //     game->context_data.menu_data.selected = 0;
-        //     game->state = GameSettings;
     } else if (isdigit(key) && game->config.seed <= 9999999999999999) {
         game->config.seed *= 10;
         game->config.seed += key - '0';
@@ -260,15 +255,54 @@ void settings_frog(Game* game) {
     }
 }
 
+void print_settings_cooldown_info(Game* game) {
+    char* messages[] = {
+        "Leaving 0 will",
+        "use 200 as cooldown",
+        "Click E to accept"
+    };
+    print_main(game, 1, centerX(game, messages[0]), messages[0]);
+    print_main(game, 3, centerX(game, messages[1]), messages[1]);
+    print_main(game, 4, centerX(game, messages[2]), messages[2]);
+    print_main(game, 10, game->main_win->cols / 2 - 10, "> %d", game->config.cooldown);
+    print_main(game, 10, game->main_win->cols / 2 + 10, "<");
+    wmove(game->main_win->win, 10, game->main_win->cols / 2 + digit_amount(game->config.cooldown) - 8);
+    curs_set(1);
+}
+
+void handle_settings_cooldown(Game* game) {
+    int key = wgetch(game->main_win->win);
+    if (key == 'e' || key == 'q' || key == ' ') {
+        curs_set(0);
+        if (game->config.cooldown == 0) game->config.cooldown = 200;
+        game->context_data.menu_data.selected = 0;
+        game->state = GameSettings;
+        save_config(&game->config, "config.txt");
+    } else if (isdigit(key)) {
+        game->config.cooldown *= 10;
+        game->config.cooldown += key - '0';
+    } else if (key == KEY_BACKSPACE && game->config.cooldown >= 0) {
+        game->config.cooldown /= 10;
+    }
+    game->config.cooldown = Clamp(game->config.cooldown, 0, 10000);
+}
+
+void settings_cooldown(Game* game) {
+    print_settings_cooldown_info(game);
+    handle_settings_cooldown(game);
+}
+
 void run_game_settings_edit(Game* game) {
     switch (game->context_data.menu_data.setting) {
         case 1: settings_border(game);
             break;
-        case 2: settings_size(game);
+        // case 2: settings_size(game);
+        //     break;
+        case 2: settings_seed(game);
             break;
-        case 3: settings_seed(game);
+        case 3: settings_frog(game);
             break;
-        case 4: settings_frog(game);
+        case 4: settings_cooldown(game);
             break;
         default:
             game->context_data.menu_data.selected = 0;

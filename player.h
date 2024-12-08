@@ -9,6 +9,7 @@ typedef struct PlayerStruct {
     char character;
     Timer timer;
     int cooldown;
+    int is_riding;
 } Player;
 
 typedef enum {

@@ -14,6 +14,7 @@ typedef struct {
     Timer spawn_timer;
     int line_speed_limit;
     float stopper_chance; // 1 - 100%, 0 - 0%
+    int friendly_lane;
 } LineCarData;
 
 typedef struct {
