@@ -22,6 +22,28 @@ void draw_cars(const Win* win, const Cars* cars) {
     }
 }
 
+int is_next_empty(const Win* win, const Player* player, Car* car) {
+    int move = 0;
+    int car_size = 0;
+    switch (car->car_ride) {
+        case ToLeft:
+            move = -1;
+        break;
+        case ToRight:
+            move = 1;
+            car_size = 2;
+        break;
+    }
+    int next_char = mvwinch(win->win, car->y, car->x+move+car_size) & A_CHARTEXT;
+    int next_char_after = mvwinch(win->win, car->y, car->x+move*2+car_size) & A_CHARTEXT;
+    if (!(next_char == 'o' && next_char_after == '=')) {
+        if (car->car_type != CarStopping || next_char != player->character) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int move_car(const Win* win, const Player* player, Car* car, int max) {
     if (timer_elapsed(&car->timer, car->speed)) {
         timer_start(&car->timer);
@@ -34,13 +56,10 @@ int move_car(const Win* win, const Player* player, Car* car, int max) {
                 move = 1;
                 break;
         }
-        int ch = mvwinch(win->win, car->y, car->x+move) & A_CHARTEXT;
-        int chAfter = mvwinch(win->win, car->y, car->x+move*2) & A_CHARTEXT;
-        if (!(ch == 'o' && chAfter == '=')) {
-            if (car->car_type != CarStopping || ch != player->character) {
-                car->x += move;
-            }
+        if (is_next_empty(win, player, car)) {
+            car->x += move;
         }
+
         if (car->x < 1 || max < car->x + 4) {
             return 1;
         }
