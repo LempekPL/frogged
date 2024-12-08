@@ -45,12 +45,9 @@ void run_game_main_menu(Game* game) {
     if (handle_select_menu(&game->context_data.menu_data.selected, key, list_length)) {
         switch (game->context_data.menu_data.selected) {
             case 0:
-                game->state = GamePlaying;
-                game->context_data.game_data.level = 1;
-                game->context_data.game_data.state = PlayingInitLevels;
+                game->state = GameMenuStart;
                 break;
             case 2:
-                game->context_data.menu_data.selected = 0;
                 game->state = GameHelp;
                 break;
             case 3:
@@ -59,6 +56,40 @@ void run_game_main_menu(Game* game) {
                 break;
             case 4:
                 game->state = GameExit;
+                break;
+            default: break;
+        }
+    }
+}
+
+void run_game_start_menu(Game* game) {
+    wcolor_set(game->main_win->win, DEFAULT_COL, NULL);
+    char* select_menu[4] = {"New Game", "Continue", "Endless", "Back"};
+    int list_length = sizeof(select_menu) / sizeof(select_menu[0]);
+    print_centered_list(game, game->context_data.menu_data.selected, select_menu, list_length);
+
+    int key = wgetch(game->main_win->win);
+    if (handle_select_menu(&game->context_data.menu_data.selected, key, list_length)) {
+        switch (game->context_data.menu_data.selected) {
+            case 0:
+                game->state = GamePlaying;
+                game->context_data.game_data.level = 1;
+                game->config.completed = 1;
+                save_config(&game->config, "config.txt");
+                game->context_data.game_data.state = PlayingInitLevels;
+                break;
+            case 1:
+                game->state = GamePlaying;
+                game->context_data.game_data.level = game->config.completed;
+                game->context_data.game_data.state = PlayingInitLevels;
+                break;
+            case 2:
+                game->state = GamePlaying;
+                game->context_data.game_data.state = PlayingInitEndless;
+                break;
+            case 3:
+                game->context_data.menu_data.selected = 0;
+                game->state = GameMenu;
                 break;
             default: break;
         }

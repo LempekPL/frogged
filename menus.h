@@ -3,6 +3,7 @@
 #include "game.h"
 
 void run_game_main_menu(Game*);
+void run_game_start_menu(Game*);
 void run_game_help(Game*);
 void run_game_settings_menu(Game*);
 void run_game_settings_edit(Game*);

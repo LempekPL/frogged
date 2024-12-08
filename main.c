@@ -24,7 +24,6 @@
 /// - cars but friendly
 /// - ranking (infinite)
 /// - stork
-/// - timer
 
 int main() {
     init_ncurses();
@@ -36,7 +35,7 @@ int main() {
                 run_game_main_menu(game);
                 break;
             case GameMenuStart:
-                // run_game_start_menu(game);
+                run_game_start_menu(game);
                 break;
             case GameMenuLevels:
                 // run_game_levels_menu(game);

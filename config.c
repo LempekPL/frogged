@@ -21,6 +21,7 @@ void save_config(GameConfig* config, char* path_name) {
     fprintf(config_save, "seed %lld\n", config->seed);
     fprintf(config_save, "frog %c\n", config->frog);
     fprintf(config_save, "cooldown %d\n", config->cooldown);
+    fprintf(config_save, "completed %d\n", config->completed);
     fclose(config_save);
 }
 
@@ -56,6 +57,10 @@ GameConfig load_config(char* path_name) {
             int tmp_cooldown;
             fscanf(config_file, "%d", &tmp_cooldown);
             config.cooldown = Clamp(tmp_cooldown, 0, 10000);
+        } else if (strcmp(name, "completed") == 0) {
+            int tmp_completed;
+            fscanf(config_file, "%d", &tmp_completed);
+            config.completed = Clamp(tmp_completed, 1, 20);
         }
     }
     fclose(config_file);
