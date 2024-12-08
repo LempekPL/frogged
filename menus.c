@@ -191,7 +191,6 @@ void settings_frog(Game* game) {
     char* messages[] = {"Type any alphanumeric", "character to set frog"};
     mvwprintw(game->main_win->win, 2, centerX(game, messages[0]), messages[0]);
     mvwprintw(game->main_win->win, 3, centerX(game, messages[1]), messages[1]);
-    mvwprintw(game->main_win->win, 4, centerX(game, messages[2]), messages[2]);
     char* current = "Current:";
     mvwprintw(game->main_win->win, 6, centerX(game, current) - 2, "%s %c", current, game->config.frog);
 
