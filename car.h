@@ -25,7 +25,7 @@ typedef struct {
     Timer timer;
 } Car;
 
-typedef struct CarsS {
+typedef struct CarsStruct {
     Car* cars;
     int size;
     int capacity;
@@ -40,6 +40,6 @@ void remove_at_cars(Cars* cars, int index);
 void clear_cars(Cars* cars);
 void free_cars(Cars* cars);
 void draw_cars(const Win* win, const Cars* cars);
-void move_cars(const Win* win, const struct PlayerS* player, Cars* cars, int max);
+void move_cars(const Win* win, const struct PlayerStruct* player, Cars* cars, int max);
 
 #endif //CAR_H

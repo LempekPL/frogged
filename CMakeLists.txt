@@ -33,6 +33,8 @@ add_executable(frogged main.c
         lines.c
         lines.h
         levels.c
-        levels.h)
+        levels.h
+        endless.c
+        endless.h)
 
 target_link_libraries(frogged ncursesw)

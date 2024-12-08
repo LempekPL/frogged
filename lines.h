@@ -11,27 +11,27 @@ typedef enum {
 
 typedef enum {
     DirToLeft,
-    DirToRight
+    DirToRight,
 } LineDirection;
 
-typedef struct {
+typedef struct LineStruct {
     LineType type;
     int y;
     LineDirection cars_direction;
-    int next_car, min_random, max_random;
+    int next_car, min_next_car, max_next_car;
     Timer spawn_timer;
     int line_speed_limit;
     float stopper_chance; // 1 - 100%, 0 - 0%
 } Line;
 
-typedef struct {
+typedef struct LinesStruct {
     Line* lines;
     int size;
     int capacity;
 } Lines;
 
 Line new_line(LineType type, int y);
-Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int car_freq, int min_random, int max_random);
+Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car);
 Lines* generate_default_lines(int height);
 Lines* new_lines(int capacity);
 void add_line(Lines* lines, const Line* line);

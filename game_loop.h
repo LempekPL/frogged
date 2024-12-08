@@ -1,6 +1,7 @@
 #ifndef GAME_LOOP_H
 #define GAME_LOOP_H
 #include "game.h"
+#include "car.h"
 
 void run_game_play(Game*);
 void free_game_data(GameData*);

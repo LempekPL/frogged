@@ -21,17 +21,17 @@ Line new_line(LineType type, int y) {
     Line line = {type, y, ToRight, -1, 0, 0,  timer, 0, 0};
     if (type == LineRoad) {
         line.next_car = RA(0, 100);
-        line.min_random = 800;
-        line.max_random = 1200;
+        line.min_next_car = 800;
+        line.max_next_car = 1200;
         line.line_speed_limit = 200;
     }
     return line;
 }
 
-Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int car_freq, int min_random, int max_random) {
+Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int next_car_in, int min_next_car, int max_next_car) {
     Timer timer;
     timer_start(&timer);
-    Line line = {type, y, direction, car_freq, min_random, max_random, timer, speed_limit, 0};
+    Line line = {type, y, direction, next_car_in, min_next_car, max_next_car, timer, speed_limit, 0};
     return line;
 }
 
@@ -46,9 +46,24 @@ Lines* new_lines(int capacity) {
 void add_line(Lines* lines, const Line* line) {
     if (lines->size == lines->capacity) {
         lines->capacity *= 2;
-        lines->lines = realloc(lines->lines, lines->capacity * sizeof(Lines));
+        lines->lines = realloc(lines->lines, lines->capacity * sizeof(Line));
     }
     lines->lines[lines->size] = *line;
+    lines->size++;
+}
+
+void shift_at_lines(Lines* lines, const Line* line, int index) {
+    if (lines->size+1 >= lines->capacity) {
+        lines->capacity *= 2;
+        lines->lines = realloc(lines->lines, lines->capacity * sizeof(Line));
+    }
+    if (index < 0 || index >= lines->size) {
+        exit(EXIT_FAILURE);
+    }
+    for (int i = index; i < lines->size - 1; i++) {
+        lines->lines[i+1] = lines->lines[i];
+    }
+    lines->lines[index] = *line;
     lines->size++;
 }
 

@@ -1,10 +1,9 @@
 #ifndef PLAYER_H
 #define PLAYER_H
-struct GameDataS;
-typedef struct GameDataS GameData;
+typedef struct GameDataStruct GameData;
 #include "game.h"
 
-typedef struct PlayerS {
+typedef struct PlayerStruct {
     int x, y;
     int curr_pts, pts, max_pts;
     char character;
@@ -20,7 +19,7 @@ typedef enum {
 
 Player* create_player(int row, int col, char character, int cooldown);
 PlayerCollision collision_player(const GameData* game_data);
-void draw_player(const Win* win, const Player* player, const Lines* lines);
+void draw_player(const Win* win, const Player* player, const struct LinesStruct* lines);
 void move_player(Player* player, int key, int maxX, int maxY);
 
 #endif //PLAYER_H

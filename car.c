@@ -24,7 +24,7 @@ void draw_cars(const Win* win, const Cars* cars) {
     }
 }
 
-int is_next_empty(const Win* win, const Player* player, Car* car) {
+int is_next_empty(const Win* win, const struct PlayerStruct* player, Car* car) {
     int move = 0;
     int car_size = 0;
     switch (car->car_ride) {
@@ -44,7 +44,7 @@ int is_next_empty(const Win* win, const Player* player, Car* car) {
     return 0;
 }
 
-int move_car(const Win* win, const struct PlayerS* player, Car* car, int max) {
+int move_car(const Win* win, const struct PlayerStruct* player, Car* car, int max) {
     if (timer_elapsed(&car->timer, car->speed)) {
         float chance = (float) rand() / (float) RAND_MAX;
         if (chance <= car->random_speed_change_chance) {
@@ -70,7 +70,7 @@ int move_car(const Win* win, const struct PlayerS* player, Car* car, int max) {
     return 0;
 }
 
-void move_cars(const Win* win, const struct PlayerS* player, Cars* cars, int max) {
+void move_cars(const Win* win, const struct PlayerStruct* player, Cars* cars, int max) {
     for (int i = 0; i < cars->size; i++) {
         int outside = move_car(win, player, &cars->cars[i], max);
         if (outside) {
