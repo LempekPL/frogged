@@ -18,8 +18,9 @@ typedef struct {
     LineType type;
     int y;
     LineDirection cars_direction;
-    int car_freq, min_random, max_random;
+    int next_car, min_random, max_random;
     Timer spawn_timer;
+    int line_speed_limit;
     float stopper_chance; // 1 - 100%, 0 - 0%
 } Line;
 
@@ -30,7 +31,7 @@ typedef struct {
 } Lines;
 
 Line new_line(LineType type, int y);
-Line new_line_ext(LineType type, int y, LineDirection direction, int car_freq, int min_random, int max_random);
+Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int car_freq, int min_random, int max_random);
 Lines* generate_default_lines(int height);
 Lines* new_lines(int capacity);
 void add_line(Lines* lines, const Line* line);

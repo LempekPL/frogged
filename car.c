@@ -76,21 +76,45 @@ void move_cars(const Win* win, const Player* player, Cars* cars, int max) {
     }
 }
 
-Car new_car(int x, int y, int move_per_ms, CarType car_type, CarDirection car_ride) {
+Car new_car(int x, int y, int move_per_ms, float speed_change_chance, CarType car_type, CarDirection car_ride) {
     Timer timer;
     timer_start(&timer);
-    Car car = {x, y, move_per_ms, car_type, car_ride, timer};
+    Car car = {x, y, move_per_ms, speed_change_chance, car_type, car_ride, timer};
     return car;
 }
 
-Car spawn_car_on_line(const Win* win, Line line, int move_per_ms, CarType car_type) {
+int is_area_clear(const Win* win, const int y, const int x) {
+    chtype buff[6];
+    mvwinchnstr(win->win, y, x - 1, buff, 5);
+    buff[5] = '\0';
+    char car_area[6];
+    for (int i = 0; i < 5; i++) {
+        car_area[i] = (char)(buff[i] & A_CHARTEXT);
+    }
+    car_area[5] = '\0';
+    for (int i = 0; i < 5; i++) {
+        if ((car_area[i] == '=' && car_area[i + 1] == 'o') || (car_area[i] == 'o' && car_area[i + 1] == '=')) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+void spawn_car_on_line(const Win* win, Cars* cars, const Line* line) {
+    float speed_change_chance = (float) rand() / (float) RAND_MAX;
     Timer timer;
     timer_start(&timer);
-    Car car = {1, line.y, move_per_ms, car_type, line.cars_direction, timer};
-    if (line.cars_direction == ToLeft) {
+    Car car = {1, line->y, line->line_speed_limit, speed_change_chance, CarEnemy, line->cars_direction, timer};
+    if (line->cars_direction == ToLeft) {
         car.x = win->cols - 4;
     }
-    return car;
+    float chance = (float) rand() / (float) RAND_MAX;
+    if (chance <= line->stopper_chance) {
+        car.car_type = CarStopping;
+    }
+    if (is_area_clear(win, car.y, car.x)) {
+        add_car(cars, &car);
+    }
 }
 
 Cars* new_cars(int capacity) {

@@ -19,19 +19,20 @@ void draw_lines(const Win* win, Lines* lines) {
 Line new_line(LineType type, int y) {
     Timer timer;
     timer_start(&timer);
-    Line line = {type, y, ToRight, -1, 0, 0,  timer};
+    Line line = {type, y, ToRight, -1, 0, 0,  timer, 0, 0};
     if (type == LineRoad) {
-        line.car_freq = RA(0, 100);
+        line.next_car = RA(0, 100);
         line.min_random = 800;
         line.max_random = 1200;
+        line.line_speed_limit = 200;
     }
     return line;
 }
 
-Line new_line_ext(LineType type, int y, LineDirection direction, int car_freq, int min_random, int max_random) {
+Line new_line_ext(LineType type, int y, LineDirection direction, int speed_limit, int car_freq, int min_random, int max_random) {
     Timer timer;
     timer_start(&timer);
-    Line line = {type, y, direction, car_freq, min_random, max_random, timer};
+    Line line = {type, y, direction, car_freq, min_random, max_random, timer, speed_limit, 0};
     return line;
 }
 

@@ -15,11 +15,11 @@ void game_play_init(Game* game) {
             game_data->goal.y = 1;
             break;
         case 2:
-            Line line1 = new_line_ext(LineRoad, game->main_win->rows / 2, DirToLeft, RA(0, 100), 1000, 6000);
+            Line line1 = new_line_ext(LineRoad, game->main_win->rows / 2, DirToLeft, 200, RA(0, 100),  1000, 6000);
             replace_at_lines(game_data->lines, &line1, game->main_win->rows / 2);
             break;
         case 3:
-            Line line2 = new_line_ext(LineRoad, game->main_win->rows / 2, DirToLeft, RA(0, 100), 1000, 6000);
+            Line line2 = new_line_ext(LineRoad, game->main_win->rows / 2, DirToRight, 200, RA(0, 100), 1000, 6000);
             line2.stopper_chance = 1;
             replace_at_lines(game_data->lines, &line2, game->main_win->rows / 2);
             break;
@@ -54,17 +54,19 @@ void draw_tutorial_text(Game* game) {
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps2[2]) + 5, helps2[2]);
             wcolor_set(game->main_win->win, ROAD_RED_COL, NULL);
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps2[3]) + 9, helps2[3]);
-        break;
+            break;
         case 3:
-            char* helps3[] = {"this is stopper", "it stops", "in front of you", "o=o", "this car can still", "kill you if you", "run into it"};
+            char* helps3[] = {
+                "this is stopper", "o=o", "it stops", "in front of you", "this car can still", "kill you if you", "run into it"
+            };
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 1, centerX(game, helps3[0]) + 5, helps3[0]);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps3[1]) + 8, helps3[1]);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps3[2]) + 5, helps3[2]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps3[2]) + 8, helps3[2]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 3, centerX(game, helps3[3]) + 5, helps3[3]);
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 4, centerX(game, helps3[4]) + 5, helps3[4]);
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 5, centerX(game, helps3[5]) + 5, helps3[5]);
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 6, centerX(game, helps3[6]) + 5, helps3[6]);
             wcolor_set(game->main_win->win, ROAD_YELLOW_COL, NULL);
-            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps3[3]) + 2, helps3[3]);
+            mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps3[1]) + 1, helps3[1]);
             break;
         default: break;
     }
@@ -97,19 +99,13 @@ void collision(Game* game) {
     }
 }
 
-void spawn_cars_randomly(Win* win, Cars* cars, Lines* lines) {
+void spawn_cars_randomly(const Win* win, Cars* cars, const Lines* lines) {
     for (int i = 0; i < lines->size; i++) {
         Line* line = ptr_at_lines(lines, i);
-        if (line->type == LineRoad && timer_elapsed(&line->spawn_timer, line->car_freq)) {
-            mvwprintw(win->win, 1, 1, "%d", line->car_freq);
-            line->car_freq = RA(line->min_random, line->max_random);
+        if (line->type == LineRoad && timer_elapsed(&line->spawn_timer, line->next_car)) {
+            line->next_car = RA(line->min_random, line->max_random);
             timer_start(&line->spawn_timer);
-            float chance = (float)rand() / (float)RAND_MAX;
-            Car car = spawn_car_on_line(win, *line, 200, CarEnemy);
-            if (chance <= line->stopper_chance) {
-                car.car_type = CarStopping;
-            }
-            add_car(cars, &car);
+            spawn_car_on_line(win, cars, line);
         }
     }
 }

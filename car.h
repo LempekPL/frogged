@@ -17,7 +17,9 @@ typedef enum {
 } CarDirection;
 
 typedef struct {
-    int x, y, speed;
+    int x, y;
+    int speed;
+    float random_speed_change_chance;
     CarType car_type;
     CarDirection car_ride;
     Timer timer;
@@ -29,8 +31,8 @@ typedef struct {
     int capacity;
 } Cars;
 
-Car new_car(int x, int y, int move_per_ms, CarType car_type, CarDirection car_ride);
-Car spawn_car_on_line(const Win* win, Line line, int move_per_ms, CarType car_type);
+Car new_car(int x, int y, int move_per_ms, float speed_change_chance, CarType car_type, CarDirection car_ride);
+void spawn_car_on_line(const Win* win, Cars* cars, const Line* line);
 Cars* new_cars(int capacity);
 void add_car(Cars* cars, const Car* car);
 Car* ptr_at_cars(const Cars* cars, int index);
