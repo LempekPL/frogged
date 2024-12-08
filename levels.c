@@ -36,10 +36,11 @@ void draw_tutorial_text(Game* game) {
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 6, centerX(game, helps3[6]) + 5, helps3[6]);
             wcolor_set(game->main_win->win, ROAD_YELLOW_COL, NULL);
             mvwprintw(game->main_win->win, game->main_win->rows / 2 + 2, centerX(game, helps3[1]) + 1, helps3[1]);
-        break;
+            break;
         case 4:
-            char* helps4 = "now try it without any help :)";
-            mvwprintw(game->main_win->win, 4, centerX(game, helps4), helps4);
+            char* helps4[] = {"now try it without", "any help :)"};
+            mvwprintw(game->main_win->win, 4, centerX(game, helps4[0]), helps4[0]);
+            mvwprintw(game->main_win->win, 5, centerX(game, helps4[1]), helps4[1]);
             break;
         default: break;
     }
@@ -65,28 +66,34 @@ void game_levels_init(Game* game) {
             break;
         case 2:
             line = new_line_ext(LineRoad, game->main_win->rows / 2, ToLeft, 200, 100, 1000, 6000);
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2);
+            replace_self_lines(game_data->lines, &line);
             break;
         case 3:
             line = new_line_ext(LineRoad, game->main_win->rows / 2, ToRight, 200, 100, 1000, 6000);
             line.stopper_chance = 1;
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2);
-        break;
+            replace_self_lines(game_data->lines, &line);
+            break;
         case 4:
             line = new_line_ext(LineRoad, game->main_win->rows / 2, ToRight, 200, 100, 1000, 6000);
             line.stopper_chance = .2;
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2-1);
+            line.y = game->main_win->rows / 2 - 1;
+            replace_self_lines(game_data->lines, &line);
             line.stopper_chance = .5;
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2+1);
+            line.y = game->main_win->rows / 2 + 1;
+            replace_self_lines(game_data->lines, &line);
             break;
         case 5:
             line = new_line_ext(LineRoad, game->main_win->rows / 2, ToRight, 100, 100, 2000, 6000);
             line.stopper_chance = .2;
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2+1);
+            line.y = game->main_win->rows / 2 + 1;
+            replace_self_lines(game_data->lines, &line);
             line.stopper_chance = .25;
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2);
+            line.y = game->main_win->rows / 2;
+            replace_self_lines(game_data->lines, &line);
             line.cars_direction = ToLeft;
-            replace_at_lines(game_data->lines, &line, game->main_win->rows / 2-1);
+            line.max_next_car = 3000;
+            line.y = game->main_win->rows / 2 - 1;
+            replace_self_lines(game_data->lines, &line);
         case 6:
         case 7:
         case 8:

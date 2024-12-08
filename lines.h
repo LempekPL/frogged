@@ -36,6 +36,7 @@ Lines* generate_default_lines(int height);
 Lines* new_lines(int capacity);
 void add_line(Lines* lines, const Line* line);
 Line* ptr_at_lines(const Lines* lines, int index);
+void replace_self_lines(const Lines* lines, const Line* line);
 void replace_at_lines(const Lines* lines, const Line* line, int index);
 void remove_at_lines(Lines* lines, int index);
 void clear_lines(Lines* lines);

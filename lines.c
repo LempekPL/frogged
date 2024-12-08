@@ -2,16 +2,20 @@
 #include <stdlib.h>
 #include "util.h"
 
-void draw_line(const Win* win, const Line line) {
+void draw_line(const Win* win, const Line line, const int splitter) {
     change_color(win, line.type);
     for (int i = 1; i < win->cols - 1; i++) {
-        mvwprintw(win->win, line.y, i, " ");
+        mvwprintw(win->win, line.y, i, splitter == 1 && i % 2 == 0 ? "_" : " ");
     }
 }
 
 void draw_lines(const Win* win, Lines* lines) {
     for (int i = 1; i < win->rows - 1; i++) {
-        draw_line(win, lines->lines[i]);
+        int splitter = 0;
+        if (i < lines->size && lines->lines[i+1].type == LineRoad && lines->lines[i].type == LineRoad) {
+            splitter = 1;
+        }
+        draw_line(win, lines->lines[i], splitter);
     }
 }
 
@@ -81,6 +85,14 @@ Line* ptr_at_lines(const Lines* lines, const int index) {
         exit(EXIT_FAILURE);
     }
     return &lines->lines[index];
+}
+
+void replace_self_lines(const Lines* lines, const Line* line) {
+    int index = line->y;
+    if (index < 0 || index >= lines->size) {
+        exit(EXIT_FAILURE);
+    }
+    lines->lines[index] = *line;
 }
 
 void replace_at_lines(const Lines* lines, const Line* line, int index) {
