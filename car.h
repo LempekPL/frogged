@@ -37,7 +37,7 @@ Car* ptr_at_cars(const Cars* cars, int index);
 void remove_at_cars(Cars* cars, int index);
 void clear_cars(Cars* cars);
 void free_cars(Cars* cars);
-void draw_cars(const Win* win, Cars* cars);
+void draw_cars(const Win* win, const Cars* cars);
 void move_cars(const Win* win, const Player* player, Cars* cars, int max);
 
 #endif //CAR_H

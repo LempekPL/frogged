@@ -173,6 +173,7 @@ void settings_seed(Game* game) {
         if (game->config.seed == 0) game->config.seed = time(NULL);
         game->context_data.menu_data.selected = 0;
         game->state = GameSettings;
+        srand(game->config.seed);
         // } else if (key == '\t') {
         //     curs_set(0);
         //     if (game->config.seed == 0) game->config.seed = time(NULL);
@@ -187,7 +188,7 @@ void settings_seed(Game* game) {
 }
 
 void settings_frog(Game* game) {
-    char* messages[] = {"Type any alphanumeric", "character to set frog", "you can't set frog to 'o'"};
+    char* messages[] = {"Type any alphanumeric", "character to set frog"};
     mvwprintw(game->main_win->win, 2, centerX(game, messages[0]), messages[0]);
     mvwprintw(game->main_win->win, 3, centerX(game, messages[1]), messages[1]);
     mvwprintw(game->main_win->win, 4, centerX(game, messages[2]), messages[2]);
@@ -198,7 +199,7 @@ void settings_frog(Game* game) {
     if (key == '\t') {
         game->context_data.menu_data.selected = 0;
         game->state = GameSettings;
-    } else if (isalnum(key) && key != 'o') {
+    } else if (isalnum(key)) {
         game->config.frog = (char) key;
         save_config(&game->config, "config.txt");
         game->context_data.menu_data.selected = 0;

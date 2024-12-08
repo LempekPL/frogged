@@ -16,7 +16,7 @@ void draw_car(const Win* win, const Car car) {
     mvwprintw(win->win, car.y, car.x, "o=o");
 }
 
-void draw_cars(const Win* win, Cars* cars) {
+void draw_cars(const Win* win, const Cars* cars) {
     for (int i = 0; i < cars->size; i++) {
         draw_car(win, cars->cars[i]);
     }
@@ -35,7 +35,8 @@ int move_car(const Win* win, const Player* player, Car* car, int max) {
                 break;
         }
         int ch = mvwinch(win->win, car->y, car->x+move) & A_CHARTEXT;
-        if (ch != 'o') {
+        int chAfter = mvwinch(win->win, car->y, car->x+move*2) & A_CHARTEXT;
+        if (ch != 'o' && chAfter != '=') {
             if (car->car_type != CarStopping || ch != player->character) {
                 car->x += move;
             }
