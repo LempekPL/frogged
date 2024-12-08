@@ -46,7 +46,7 @@ void move_cars(Cars* cars, int max) {
     for (int i = 0; i < cars->size; i++) {
         int outside = move_car(&cars->cars[i], max);
         if (outside) {
-            remove_at(cars, i);
+            remove_at_cars(cars, i);
         }
     }
 }
@@ -75,7 +75,7 @@ void add_car(Cars* cars, const Car* car) {
     cars->size++;
 }
 
-void remove_at(Cars* cars, int index) {
+void remove_at_cars(Cars* cars, int index) {
     if (index < 0 || index >= cars->size) {
         exit(EXIT_FAILURE);
     }
@@ -91,6 +91,7 @@ void clear_cars(Cars* cars) {
     cars->size = 0;
 }
 
-void free_cars(const Cars* cars) {
+void free_cars(Cars* cars) {
     free(cars->cars);
+    free(cars);
 }

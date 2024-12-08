@@ -30,7 +30,7 @@ typedef struct {
 Car new_car(int x, int y, int move_per_ms, CarType car_type, CarRide car_ride);
 Cars* new_cars(int capacity);
 void add_car(Cars* cars, const Car* car);
-void remove_at(Cars* cars, int index);
+void remove_at_cars(Cars* cars, int index);
 void clear_cars(Cars* cars);
 void free_cars(const Cars* cars);
 void draw_cars(const Win* win, Cars* cars);
